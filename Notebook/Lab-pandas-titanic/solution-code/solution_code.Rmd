@@ -1,0 +1,196 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+## Step 1: Reading the data
+
+1. Go to [https://www.kaggle.com/c/titanic/data](https://www.kaggle.com/c/titanic/data)
+2. If you scroll down the page a bit, you'll see a data dictionary explaining each of the columns. Take a minute to familiarize yourself with how the csv is structured.
+4. Download the `train.csv` file into this project
+3. Create an iPython notebook and load the csv into pandas.
+
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# %matplotlib inline
+```
+
+```{python}
+df = pd.read_csv('train.csv')
+```
+
+```{python}
+df.head(3)
+```
+
+
+## Step 2: Cleaning the data
+1. Create a bar chart showing how many missing values are in each column
+2. Which column has the most `NaN` values? How many cells in that column are empty?
+3. Delete all rows where `Embarked` is empty
+4. Fill all empty cabins with **¯\\_(ツ)_/¯**
+
+Note: `NaN`, empty, and missing are synonymous.
+
+`Cabin` and `Age` have the most nulls:
+
+```{python}
+df.isnull().sum().plot(kind='barh')
+plt.title('Count of Missing Values');
+```
+
+```{python}
+df.isnull().sum().sort_values(ascending=False)
+```
+
+```{python}
+df.dropna(subset=['Embarked'], inplace=True)
+```
+
+```{python}
+df['Cabin'].fillna('¯\(ツ)/¯', inplace=True)
+```
+
+```{python}
+df.isnull().sum()
+```
+
+## Step 3: Feature extraction
+1.  There are two columns that pertain to how many family members are on the boat for a given person. Create a new column called `FamilyCount` which will be the sum of those two columns.
+2. Reverends have a special title in their name. Create a column called `IsReverend`: 1 if they're a preacher, 0 if they're not.
+3. In order to feed our training data into a classification algorithm, we need to convert our categories into 1's and 0's using `pd.get_dummies`
+  - Create 3 columns: `Embarked_C`, `Embarked_Q` and `Embarked_S`. These columns will have 1's and 0's that correspond to the `C`, `Q` and `S` values in the `Embarked` column
+  - Do the same thing for `Sex`
+  - BONUS: Extract the title from everyone's name and create dummy columns
+
+```{python}
+df['FamilyCount'] = df['Parch'] + df['SibSp']
+```
+
+```{python}
+df['IsReverend'] = df['Name'].str.contains('Rev.').map(lambda x: int(x))
+```
+
+```{python}
+df = pd.get_dummies(df, columns=['Embarked'])
+```
+
+```{python}
+df['IsMale'] = df['Sex'].map(lambda x: 1 if x == 'male' else 0)
+```
+
+```{python}
+df.drop('Sex', axis=1, inplace=True)
+```
+
+```{python}
+df['Title'] = [each.split(',')[1].split('.')[0].strip() for each in df['Name']]
+```
+
+## Step 4: Exploratory analysis
+1. What was the survival rate overall?
+2. Which gender fared the worst? What was their survival rate?
+3. What was the survival rate for each `Pclass`?
+4. Did any reverends survive? How many?
+5. What is the survival rate for cabins marked **¯\\_(ツ)_/¯**
+6. What is the survival rate for people whose `Age` is empty?
+7. What is the survival rate for each port of embarkation?
+8. What is the survival rate for children (under 12) in each `Pclass`?
+9. Did the captain of the ship survive? Is he on the list?
+10. Of all the people that died, who had the most expensive ticket? How much did it cost?
+11. Does having family on the boat help or hurt your chances of survival?
+
+```{python}
+df['Survived'].mean()
+```
+
+```{python}
+df.groupby('IsMale').mean()[['Survived']]
+```
+
+```{python}
+df.groupby('Pclass').mean()[['Survived']]
+```
+
+```{python}
+df[df['IsReverend'] == 1][['Survived']]
+```
+
+```{python}
+df[df['Cabin'] == '¯\(ツ)/¯'][['Survived']].mean()
+```
+
+```{python}
+df[df['Age'].isnull()][['Survived']].mean()
+```
+
+```{python}
+for col in ['Embarked_C', 'Embarked_Q', 'Embarked_S']:
+    print(col, ':')
+    print(df[df[col] == 1][['Survived']].mean())
+    print()
+```
+
+```{python}
+df[df['Age'] < 12].groupby('Pclass').mean()[['Survived']]
+```
+
+```{python}
+df[df['Name'].str.contains('Capt.')]
+```
+
+```{python}
+df[df['Survived'] == 0].sort_values(by='Fare', ascending=False).head()
+```
+
+```{python}
+df[df['Survived'] == 0][['FamilyCount']].plot(kind='hist')
+plt.title('FamilyCount for Passengers who Died');
+```
+
+```{python}
+df[df['Survived'] == 1][['FamilyCount']].plot(kind='hist')
+plt.title('FamilyCount for Passengers who Survived');
+```
+
+## Step 5: Plotting
+Using Matplotlib and Seaborn, create several charts showing the survival rates of different groups of people. It's fine if a handful of charts are basic (Gender, Age, etc), but what we're really looking for is something beneath the surface.
+
+
+```{python}
+df.groupby('Survived').mean()[['FamilyCount']].plot(kind='barh')
+plt.title('Average Number of Family Members');
+```
+
+```{python}
+df.groupby('Survived').mean()[['Fare']].plot(kind='barh')
+plt.title('Average Fare');
+```
+
+```{python}
+df.groupby('Survived').mean()[['IsMale']].plot(kind='barh')
+plt.title('Proportion of Men vs Women who survived');
+```
+
+```{python}
+df.groupby(['Pclass', 'IsMale']).mean()[['Survived']].plot(kind='barh')
+```

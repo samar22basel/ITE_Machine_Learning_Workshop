@@ -1,0 +1,481 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+# Principles of Data Visualization, Part 1
+
+_Authors: Mahesh
+
+
+<img src="./images/viz_imp.png" alt="drawing" width="400"/>
+
+Visualizing data is a powerful way to help your audience remember what you are saying and to help you better understand your data ([*source*](https://www.finereport.com/en/data-visualization/data-visualization-2.html)).
+
+
+### Packages Today
+- [NumPy](http://www.numpy.org/): Numerical Python - scalars, vectors, matrices, etc. and tools for manipulating them.
+- [Pandas](https://pandas.pydata.org/): Python Data Analysis Library - storing/"munging" (cleaning/transforming) data.
+- [Matplotlib](https://matplotlib.org/): Python plotting library - this is (unsurprisingly) what we'll use to plot things!
+- [Seaborn](https://seaborn.pydata.org/): Statistical Visualization Library - this is commonly used for more complicated visuals (we'll ignore most of these because they're often less accessible to stakeholders).
+
+
+<details><summary>Let's get started with a question: what is the point of creating a visualization for data?</summary>
+    
+- "Use a picture. It's worth a thousand words." - Tess Flanders, 1911
+- We generally use visualizations in order to efficiently and/or effectively communicate information.
+</details>
+
+
+<details><summary>We often generate data visualizations for exploratory analysis or explanatory analysis. What is the difference?</summary>
+    
+- Exploratory analysis is when we are exploring our data, like identifying patterns or discovering outliers.
+- Explanatory analysis is when we are communicating (explaining) our results to a client, boss, stakeholder, etc.
+</details>
+
+Today, we will focus on **explanatory analysis**. Many of these tools will be transferable to exploratory analysis.
+
+### LEARNING OBJECTIVES 
+1. Identify what type of visualization may be appropriate for a given scenario.
+2. Generate text, bar graphs, histograms, tables, heatmaps, scatterplots, line plots in `matplotlib`.
+3. Critique data visualizations and implement changes in `matplotlib`.
+
+```{python}
+# Importing NumPy and Pandas.
+
+
+# Importing matplotlib.pyplot - the specific plotting API 
+# https://matplotlib.org/api/pyplot_api.html
+
+
+# Import Seaborn.
+
+```
+
+<details><summary>Let's bring in the Stock data.</summary>
+    
+![](https://i.ytimg.com/vi/if-2M3K1tqk/maxresdefault.jpg)
+</details>
+
+```{python}
+# Bring in stock data.
+
+
+# Convert stock date to datetime.
+
+```
+
+```{python}
+# Check out the first five rows of the stocks data.
+
+
+```
+
+```{python}
+# Display the different weekdays and how frequently we observe each of them.
+
+```
+
+```{python}
+# Display the different stock tickers and how frequently we observe each of them.
+
+```
+
+## Pros and Cons of Visuals
+
+There are many ways to visualize the same data. [This FlowingData post](https://flowingdata.com/2017/01/24/one-dataset-visualized-25-ways/) by Nathan Yau shows the same data visualized 25 different ways. Two of the 25 examples are shown below.
+
+<img src="./images/country-v-average.png" alt="drawing" width="800"/>
+
+<img src="./images/country-over-time.png" alt="drawing" width="900"/>
+
+- If we Google "data visualization tools," we will quickly get overwhelmed with all of the data visualization libraries that are out there. (Tableau, R/Python, Images in Google Sheets, D3.js, Microsoft Paint...)
+- If we Google "good data visualizations," we'll see lots of amazing images/videos/dashboards/apps with really high production values, but we recognize that we won't be able to easily replicate these.
+- If we head to [viz.wtf](http://viz.wtf), we can see lots of images that show us what **not** to do... but not what **to** do!
+
+
+### If-This-Then-That Rules
+
+I'm not a visual designer. Instead, I like things that are rule-oriented. I want to attempt to break "picking a good visualization" down into a set of "if-this-then-that" rules. 
+- **This won't be a perfect, "one-size-fits-all" set of rules.**
+- There will be situations in which you want to "break" these rules. If you have the time, the energy, and/or the creativity... then break them!
+- Hopefully this is a "one-size-fits-_most_" set of rules.
+
+### Qualitative vs. Quantitative Variables
+- Quantitative variables (commonly called numerical variables) are variables that are measured on a numeric scale.
+    - Stock price at closing bell.
+    - Volume of stocks traded.
+- Qualitative variables (commonly called categorical variables) are variables that are not measured on a numeric scale.
+    - Days of the week.
+    - Stock ticker.
+
+
+### If you are reporting one or two numbers, then:
+- simply state the numbers, or
+- compare numbers using a bar chart.
+
+
+**Example 1**: Suppose we wanted to compare the performance of the AAPL stock to the Google stock on Google's first day of trading (August 19, 2004) using a bar chart.
+
+```{python}
+# save AAPL Closing Stock Price on August 19, 2004 as variables
+
+# save GOOG Closing Stock Price on August 19, 2004 as variables
+
+```
+
+```{python}
+# Set size of figure: eight by five.
+plt.figure(figsize = (8, 5))
+
+# Create a bar chart.
+# plt.bar() will create a vertical bar chart.
+
+
+# Add a title and show the plot.
+
+```
+
+**If you are reporting one or two numbers**, then:
+- simply state the numbers, or
+- compare numbers using a bar chart.
+
+What you choose to do depends on the time and energy you have.
+
+Remember that it is usually a bad idea to just report one number!
+
+Let's compare multiple numbers in a bar chart.
+
+
+**Example 2:** Let's say we want to compare the maximum closing price for various tickers. 
+
+In the book *Storytelling with Data*, the author talks about utilizing color and text in order to tell a story. Let's walk through that process.
+
+```{python}
+# find the maximum closing price
+
+```
+
+```{python}
+# maximum closing price
+
+```
+
+```{python}
+# maximum closing price
+
+```
+
+```{python}
+# maximum closing price
+
+```
+
+```{python}
+# plot it
+
+
+```
+
+<details><summary>What are some things we can add to make this visualization better?</summary>
+    
+- Add a descriptive title
+- Add axis labels
+- Make plot bigger
+</details>
+
+```{python}
+
+```
+
+<details><summary>What do you want your stakeholders to see in this visualization?</summary>
+    
+- Google has a much higher maximum closing price than the others
+</details>
+
+
+We can use color and text to tell our story.
+
+```{python}
+
+```
+
+Adding random color doesn't help us much, other than potentially making your plot more visually appealing. We can use color to draw the audience's eyes where we want them to look.
+
+```{python}
+
+```
+
+We can also use text to tell the audience what we want them to learn from our visualizations.
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+---
+
+#### Commonly, we want to visualize *distributions*.
+- The **distribution** of a variable is 1) the set of all values of that variable and 2) how frequently we observe each value.
+
+<img src="./images/household_income.png" alt="drawing" width="525"/>
+
+- This is a visual representation of all of our data. We can then use this to answer lots of other questions.
+    - What is the likeliest income for a household to have?
+    - What is the range of incomes?
+    - How likely is it that a household has an income above 50,000 dollars? Between 100,000 and 150,000 dollars?
+
+### If your goal is to visualize the distribution of one variable, then:
+- if that variable is qualitative: **use a bar chart**.
+- if that variable is quantitative: **use a histogram**.
+
+
+**Example 3**: Suppose we wanted to visualize the distribution of stock tickers. (That is, how many values did we observe for each ticker?)
+
+```{python}
+
+```
+
+```{python}
+# Create a bar chart.
+# plt.bar() will create a vertical bar chart.
+# We have to pass in our X (labels) and Y (values).
+plt.bar(['SBUX', 'INTC', 'NKE', 'AAPL', 'YHOO', 'DOW', 'GOOG', 'NDAQ'],
+        stocks['ticker'].value_counts())
+
+# Add a title and show the plot.
+plt.title('Number of Closing Stock Prices Stored');
+```
+
+**Example 4**: Suppose we wanted to visualize the distribution of stock values but write out the name instead of using the stock ticker. What's the problem here?
+
+```{python}
+# Create a bar chart.
+# plt.bar() will create a vertical bar chart.
+# We have to pass in our X (labels) and Y (values).
+plt.bar(['Starbucks', 'Intel Corp.', 'Nike', 'Apple', 'Yahoo', 'Dow', 'Google', 'Nasdaq Inc.'],
+        stocks['ticker'].value_counts())
+
+# Add a title and show the plot.
+plt.title('Number of Closing Stock Prices Stored');
+```
+
+**Example 5**: Suppose we wanted to visualize the distribution of stock values but write out the name instead of using the stock ticker. We can get around the above issue by creating a **horizontal bar chart**.
+
+```{python}
+# plt.barh() will create a horizontal bar chart. (Note the h at the end of bar!)
+# We have to pass in our values and labels again. Luckily, we don't need to swap the order!
+
+
+
+
+```
+
+**Example 6**: Suppose we wanted to visualize the distribution of closing stock prices for `SBUX`. Since this is a quantitative variable, we will use a **histogram**.
+
+```{python}
+# Return all closing stock prices for SBUX ticker
+
+```
+
+```{python}
+plt.hist()
+plt.title('Closing Stock Prices for SBUX');
+```
+
+```{python}
+
+```
+
+- Note that histograms are easier to produce. When dealing with qualitative variables, we need to tell our bar chart what the X values are. When dealing with quantitative variables, the histogram can infer what it is!
+- However, also note that histograms can vary wildly based on how many bins ("categories") there are.
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+There is no best number of bins and any guidelines about number of bins will usually depend on the shape of the data. 
+- ***My "best practice" recommendation***: Add a kernel density estimate (`kde`) that will attempt to estimate what the true probability density function (pdf) will look like. This can be done (easily) in `seaborn`, a Python visualization library built on top of `matplotlib`.
+
+```{python}
+sns.distplot(stocks[stocks['ticker'] == 'SBUX']['close'], bins = 10, kde = True);
+```
+
+```{python}
+
+```
+
+- ***My "best practice" recommendation***: Note that a kernel density estimate might be confusing to some stakeholders (clients, boss, etc.). Consider using `kde = True` only for exploratory visualization.
+    
+---
+
+**Practice**: Visualize the distribution of `GOOG` closing prices. Generate it with a kernel density estimate and tweak the number of bins to get as close to the kde as possible, then generate your plot in a way you'd likely present it to a stakeholder.
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+**If your goal is to visualize the distribution of one variable**, then:
+- if that variable is qualitative: use a bar chart.
+- if that variable is quantitative: use a histogram.
+
+Remember that if you are visualizing with a histogram, then your number of bins might substantially affect how your distribution looks, especially for small sample sizes. Consider using a kernel density estimate to help you visualize a smooth distribution of your data during your **exploratory** phase, but you *may* want to exclude the kde for your **explanatory** (reporting) phase.
+
+
+## Bonus (Optional): Text
+
+**Practice**: Suppose we wanted to quantify the performance of the AAPL stock over time.
+
+```{python}
+# AAPL Closing Stock Price on January 2, 1998. 
+
+
+# AAPL Closing Stock Price on August 9, 2013.
+
+```
+
+```{python}
+# Percent change formula: 100 * (value_2 - value_1) / |value_1|
+
+aapl_pct_change =
+```
+
+```{python}
+# Set size of figure: eight by five.
+plt.figure(figsize = (8, 5))
+
+# Create text:
+plt.text(x = 0.5,                              # at horizontal = 0.5
+         y = 0.9,                              # at vertical = 0.9
+         s = 'Apple\'s stock price increased', # content of text (string)
+         ha = 'center',                        # center-aligned horizontally
+         va = 'center',                        # center-aligned vertically
+         size = 35,                            # font size = 35
+         alpha = 0.6)                          # alpha = 0.6 --> 60% opaque; 40% clear
+
+
+# Create text:
+# at (horizontal = 0.5, vertical = 0.55)
+# stating the percent change (s means string)
+# center-aligned
+# font size 125
+# alpha = 1 --> totally opaque
+
+plt.text(x = 0.5,
+         y = 0.55,
+         s = str(round(pct_change)) + '%',
+         ha = 'center',
+         va = 'center',
+         size = 125,
+         alpha = 1)
+
+# Create text:
+# at (horizontal = 0.5, vertical = 0.25)
+# stating "between January 1998 and August 2013"
+# with a line break in between "1998" and "and"
+# center-aligned
+# font size 35
+# alpha = 0.6 --> 40% clear; 60% opaque
+plt.text(x = 0.5,
+         y = 0.2,
+         s = 'between January 1998\nand August 2013.',
+         ha = 'center',
+         va = 'center',
+         size = 35,
+         alpha = 0.6)
+
+# No axes.
+plt.axis('off');
+```
+
+<!-- #region -->
+It is often a bad idea to simply report one number. By giving only one number, we can often be misleading. Let's avoid this!
+- I got a 74% on my last exam.
+    - I got a 74% on my last exam. The class average was a 56%.
+- There were 62,984,828 votes cast for Trump in the 2016 Presidential election.
+    - There were 65,853,514 votes cast for Clinton and 62,984,828 votes cast for Trump in the 2016 Presidential election.
+- Our company earned 5MM (five million) dollars last year.
+    - Our company earned 5MM last year. This is our highest yet; our company had an average of 2MM in revenue over all previous years.
+
+
+- ***My "best practice" recommendation***: Rather than reporting one number, provide context by comparing multiple numbers.
+
+---
+<!-- #endregion -->
+
+Identifying the right combination of `figsize`, `x`, `y`, `size`, line breaks (`\n`) in `s`, and so on will mostly be done through guess-and-check. 
+- ***My "best practice" recommendation***: copy what exists now to your next use, then tweak as needed!
+
+
+---
+**Practice**: Report that `GOOG` (Google) grew from 100.76 in August 2004 to 890.31 in August 2013. (I've given you the `goog_pct_change` below.) Be sure to compare it to another number!
+
+```{python}
+goog_pct_change = 
+```
+
+```{python}
+# Set size of figure: ten by seven.
+
+
+# Create text:
+# at (horizontal = 0.5, vertical = 0.55)
+# stating the percent change (s means string)
+# center-aligned
+# font size 225
+# alpha = 0.9
+
+
+
+# Create text:
+# at (horizontal = 0.5, vertical = 0.15)
+# stating "in Google's stock price, compared to 100% increase in the Dow."
+# center-aligned
+# font size 45
+# alpha = 0.5
+
+
+
+# No axes.
+
+```
+
+As Einstein said, "Everything should be as simple as it can be, but not simpler." This is pretty simple. If it works... use it!
+- It's not lost in a table.
+- It's very clearly calling out what we want to emphasize.
+- Understanding `x`, `y`, `fontsize`, etc. will be helpful later if we want to annotate a plot with text.
+
+![](./images/wordart.png)
+
+---

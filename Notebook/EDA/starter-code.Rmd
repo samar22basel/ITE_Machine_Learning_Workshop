@@ -1,0 +1,298 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+# EDA Walkthrough
+
+_Authors: Mahesh
+
+---
+
+The dataset for today's lesson (`Heart.csv`) comes from the book, [An Introduction to Statistical Learning (ISLR)](http://faculty.marshall.usc.edu/gareth-james/ISL/). It's comprised of diagnostic measurements for 303 patients to determine whether or not they have heart disease (the `AHD` column).
+
+Though in many if not most cases the EDA procedure will be considerably more involved, this should give you an idea of the basic workflow a data scientist would use when working with a new dataset.
+
+
+### Learning Objectives
+
+- Quickly describe a dataset, including data types, missing values and basic descriptive statistics
+- Rename columns (series) in a DataFrame
+- Visualize data distributions with box plots
+- Calculate and visualize correlation
+
+```{python}
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+```
+
+## Load the data
+
+---
+
+Import the CSV into a pandas DataFrame.
+
+```{python}
+file_path = './datasets/Heart.csv'
+```
+
+```{python}
+
+```
+
+## Describe the basic format of the data and the columns
+
+---
+
+Use the `.head()` method (and optionally pass in an integer for the number of rows you want to see) to get a glimpse of your dataset. This is a good initial step to get a feel for what is in the CSV and what problems may be present.
+
+The `.dtypes` attribute tells you the data type for each of your columns.
+
+```{python}
+# Print out the first 8 rows:
+
+```
+
+```{python}
+# Look at the dtypes of the columns:
+
+```
+
+## Drop unwanted columns
+
+---
+
+It looks like `Unnamed: 0` is an index. This is redundant, since `pandas` automatically creates an index for us (the bold numbers to the left of the DataFrame).
+
+The `.drop()` method can be used to get rid of a column like so:
+
+```python
+df.drop(columns=['list', 'columns', 'to', 'drop'], inplace=True)
+```
+
+The `inplace=True` parameter makes our change permanent.
+
+```{python}
+# print out the index object and the first 20 items in the DataFrame's index 
+# to see that we have these row numbers already:
+
+```
+
+```{python}
+# Remove the unneccesary column:
+
+```
+
+## Clean corrupted column
+
+---
+
+From the previous step, we noticed the `Age` column was interpreted as a string, even though the values are integers.
+
+It is pretty common to have numeric columns represented as strings in your data if some of the observations are corrupted. It is important to always check the data types of your columns.
+
+**What is causing the `Age` column to be encoded as a string?**
+
+```{python}
+
+```
+
+In the cell below, replace all "?" cells with `np.nan`.
+
+```{python}
+
+```
+
+## Determine how many observations are missing
+
+---
+
+Having replaced the question marks with `np.nan` values, we know that there are some missing observations for the `Age` column. 
+
+When we start to build models with data, null values in observations are (almost) never allowed. It is important to always see how many observations are missing for each column.
+
+We can count the null values for each column like so:
+
+```python
+df.isnull().sum()
+```
+
+The `.isnull()` method will convert the columns to `True` and `False` values.
+
+The `.sum()` method will then sum these boolean columns, and the total number of null values per column will be returned.
+
+```{python}
+
+```
+
+**Drop the null values.** 
+
+In this case, lets keep it simple and just drop the rows from the dataset that contain null values. If a column has a ton of null values it often makes more sense to drop the column entirely instead of the rows with null values.
+
+The `.dropna()` function will drop any rows that have _**ANY**_ null values for you.  Use this carefully as you could drop many more rows than expected.
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+## Make the column names more descriptive
+---
+
+One minor annoyance is that our column names are not at all intuitive. 
+
+Let's rename them! 
+
+There are two popular methods to renaming columns.
+
+1. Using a _dictionary substitution_, which is very useful if you only want to rename a few columns. 
+2. Using a _list replacement_, which is quicker than writing out a dictionary, but requires a full list of names.
+
+We'll explore both options in the cells below.
+
+```{python}
+# Dictionary Method
+new_columns_dict = {
+    'Age': 'age',
+    'Sex': 'sex_male',
+    'ChestPain': 'chest_pain',
+    'RestBP': 'resting_blood_pressure',
+    'Chol': 'cholesterol',
+    'Fbs': 'fasting_blood_sugar',
+    'RestECG': 'resting_ecg',
+    'MaxHR': 'max_heart_rate',
+    'ExAng': 'exercise_induced_angina',
+    'Oldpeak': 'old_peak',
+    'Slope': 'slope',
+    'Ca': 'ca',
+    'Thal': 'thallium_stress_test',
+    'AHD': 'has_heart_disease',
+}
+```
+
+```{python}
+# List Replacement Method
+new_columns_list = [
+    'age',
+    'sex_male',
+    'chest_pain',
+    'resting_blood_pressure',
+    'cholesterol',
+    'fasting_blood_sugar',
+    'resting_ecg',
+    'max_heart_rate',
+    'exercise_induced_angina',
+    'old_peak',
+    'slope',
+    'ca',
+    'thallium_stress_test',
+    'has_heart_disease',
+]
+
+# df.columns = new_columns_list
+```
+
+## Describe the summary statistics for the columns
+---
+
+<img src="https://snag.gy/07JFa5.jpg" width="350">
+
+---
+
+The `.describe()` function gives summary statistics for each of your columns. What are some, if any, oddities you notice about the columns based on this output?
+
+```{python}
+
+```
+
+You can also use `.groupby()` + `.describe()` for cohort analysis
+
+```{python}
+
+```
+
+## Plot variables with potential outliers using boxplots.
+
+---
+
+Here we will use the seaborn package to plot boxplots of the variables we have identified as potentially having outliers.
+
+Some notes on seaborn's boxplot keyword argument options:
+
+    orient: can be 'v' or 'h' for vertical and horizontal, respectively
+    fliersize: the size of the outlier points (pixels I think)
+    linewidth: the width of line outlining the boxplot
+    notch: show the confidence interval for the median (calculated by seaborn/plt.boxplot)
+    saturation: saturate the colors to an extent
+
+There are more keyword arguments available but those are most relevant for now.
+
+_If you want to check out more, place your cursor in the `boxplot` argument bracket and press `shift+tab` (Press four times repeatedly to bring up detailed documentation)._
+    
+
+```{python}
+# age
+
+```
+
+```{python}
+# max heart rate
+
+```
+
+## Correlation matrices
+
+---
+
+A great way to easily get a feel for linear relationships between your variables is with a correlation matrix.
+
+Below is the formula for the correlation between two variables $X$ and $Y$:
+
+
+#### Correlation
+
+### $$ \text{pearson correlation}\;r = cor(X, Y) =\frac{cov(X, Y)}{std(X)std(Y)}$$
+
+
+#### The correlation matrix
+
+We can see the correlation between all the numeric variables in our dataset by using the `.corr()` method.
+
+It's useful to get a feel for which columns are correlated. The `.corr() method` can help you decide what is worth investigating further (though with a lot of variables, the matrix can be a bit overwhelming...)
+
+```{python}
+# A:
+
+```
+
+It can be difficult to spot any outliers simply by staring at our correlation matrix. To help get around this issue, let's use Seaborn's `.heatmap()` to give our correlation matrix some color.
+
+```{python}
+# A:
+
+```
+
+```{python}
+
+```
