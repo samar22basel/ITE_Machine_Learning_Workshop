@@ -1,0 +1,658 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<!-- #region -->
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 10px;"> 
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+#  Intro to Python: Data Types
+
+
+_Authors: Mahesh
+
+---
+
+### LEARNING OBJECTIVES
+*After this lesson, you will be able to:*
+- Learn to use basic Jupyter Notebook features
+- Define integers, strings, tuples, lists, and dictionaries
+- Demonstrate arithmetic operations and string operations
+<!-- #endregion -->
+
+## First and Foremost: Python is a Calculator
+_(...just like every other programming language)_
+
+Let's learn some common mathematical operations:
+
+```{python}
+# Addition
+```
+
+```{python}
+# Subtraction (note we can have negative numbers!)
+```
+
+```{python}
+# Multiplication
+```
+
+```{python}
+# Division
+```
+
+```{python}
+# Exponentiation (do NOT use ^)
+```
+
+```{python}
+# Modular division ("mod" for short)
+```
+
+```{python}
+# Floor division (ie "round down" division)
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+## Variables
+Great - Python is just a fancy calculator. It's also important for us to be able to save numbers as **variables** so we can reference them later without memorizing their value.
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+## Naming Rules
+
+> _There are only two hard things in Computer Science: cache invalidation and naming things._ - Phil Karlton
+
+You can _pretty much_ name variables whatever you want. But, there are a few rules we should follow. Some are strict, some are just good manners.
+
+### Variable naming rules (mandatory)
+- Names can only consist of numbers, letters and underscores.
+- Names can't begin with numbers.
+- You can't name a variable after a built-in Python keyword (eg `if`).
+
+### Variable naming rules (good manners)
+- Names should _**always**_ be descriptive (ie, don't name variables `x` and `df`)
+- No capital letters!
+- Variables should not begin with an underscore (this means something special)
+- Multi-word variables should be in `snake_case`. All lower case separated by underscores.
+- Technically, you _can_ name variables after built-in Python _functions_ (like `print`), but it's an _extremely_ bad idea to do so.
+    - Rule of thumb: If a variable name turns green, don't use it!
+    
+### Math exercise (sorry):
+Recall the quadratic formula for solving a polynomial equation with coefficients $a$, $b$, $c$:
+
+$$ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} $$
+
+```{python}
+a = 1
+b = -8
+c = 15
+```
+
+```{python}
+
+```
+
+## So, what is a "data type"?
+When you hear the word "data", you probably think of a spreadsheet. Actually, **data is a synonym for information!** Anything that represents "information" is data. Including any and all Python variables. If I run `x = 3`, then `x` is data!
+
+Data can come in various **types.** We've already seen two types!
+
+1. The `int` type: Integers with no decimal part (eg `2`, `-30`, `14`)
+1. The `float` type: Numbers with a decimal part, even if that part is zero (eg `2.5`, `3.141`, `2**0.5`, `-3.0`)
+
+Curious about what an object's data type is? Simply use the `type()` function to ask!
+
+```python
+type(3) # int
+type(4.2) # float
+```
+
+```{python}
+type(3)
+```
+
+```{python}
+type(4.2)
+```
+
+<!-- #region slideshow={"slide_type": "slide"} -->
+## Strings
+
+---
+
+Strings are how we store text data in Python. Strings are _strings of characters_ between either double quotes (`"`) or single quotes (`'`). Python doesn't care which as long as they match.
+
+<!-- #endregion -->
+
+```{python slideshow={'slide_type': 'fragment'}}
+"The pen is mightier than the sword!"
+```
+
+```{python}
+'Single quotes work just fine too.'
+```
+
+```{python}
+# Multi-line string
+```
+
+```{python}
+
+```
+
+```{python}
+# Escape characters
+```
+
+<!-- #region slideshow={"slide_type": "fragment"} -->
+The **print** command prints the value assigned to the variable `x` on the screen. 
+
+The **print** statement removes the quotations, whereas just running they jupyter cell with `x` at the last line leaves the quotations in.
+
+You can use 'single' or "double" quotations to create a string variable.
+<!-- #endregion -->
+
+## String Math!
+Besides simply storing text, we can also operate on strings. Everything in Python has a **type**, and types can be operated on with their respective **methods**. Methods are actions we can perform on a type using the following syntax:
+
+```python
+variable.method(parameters)
+```
+
+```{python}
+s1 = "Be quiet"
+s2 = "this is a library!"
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+```{python}
+# Uppercasing is a method in Python
+```
+
+```{python}
+# Also lowercase
+```
+
+```{python}
+# There are plenty of commands. let's try out Jupyter's autocomplete
+# feature to see what we can do!
+```
+
+```{python}
+# Let's have some fun with .replace()!
+```
+
+```{python}
+# Also: An extremely useful method is .split()
+```
+
+<!-- #region slideshow={"slide_type": "slide"} -->
+## Slicin' Strings
+We may also want to pick apart our strings. We can do this by **indexing** or **slicing**. In fact, you can index or slice several different types in Python. For example:
+
+- Strings
+- Lists
+- Tuples
+- Sets
+
+---
+
+All of the above types can be accessed using brackets in the following ways:
+
+- **`s[0]`** References the first element
+- **`s[0:4]`** References the first **4** elements of a string from index **`0`**.
+- **`s[-1]`** Reference the _first_ item in reverse order (or the last item).
+- **`s[-2]`** Reference the _second_ item in reverse order (second to last item).
+- **`s[0:-3]`** Reference everyting _execept the last 3_ elements.
+
+<!-- #endregion -->
+
+```{python}
+s = "Python programming is really fun"
+```
+
+```{python}
+len(s)
+```
+
+```{python}
+# First letter
+```
+
+```{python}
+# Second letter
+```
+
+```{python}
+# Second through fourth letter
+```
+
+```{python}
+# First 5 letters
+```
+
+```{python}
+# Last letter
+```
+
+```{python}
+# Last 5 letters
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+## Collection Types!
+
+![](imgs/skittles.jpg)
+
+We often want to store many values in one variable. A _collection_. There are several collection types in Python. The first and most common is...
+
+### Lists
+Lists are mutable, heterogeneous collections.
+
+- **Mutable** = They can be changed
+- **Heterogeneous** = They can hold values of different data types
+
+```{python}
+names = ['Adi', 'Boom', 'Charlie', 'Daenerys', 'Elon', 'Francine']
+type(names)
+```
+
+```{python}
+# Reference 1st item
+```
+
+```{python}
+# Reference 2nd item
+```
+
+```{python}
+# Every other name, starting with the third
+```
+
+```{python}
+# Backwards!
+```
+
+### List Operations
+
+```{python}
+# Append
+names.append('Gary')
+```
+
+```{python}
+names
+```
+
+```{python}
+# Remove
+```
+
+```{python}
+
+```
+
+```{python}
+# # Join???
+```
+
+### Tuples
+Tuples are less used than lists, but very similar. They are immutable and heterogeneous
+
+- **Immutable** = Once made, they can never be changed.
+- **Heterogeneous** = They can contain values of different types
+
+For our purposes, you can just think of tuples as immutable lists. Their existence is partly legacy from a time when they were more useful. Traditionally they're only used to hold short sequences of variables.
+
+```{python}
+family = ('Ken', 'Tina', 'Jeremy')
+```
+
+```{python}
+# Can slice and index like normal
+family[0]
+```
+
+```{python}
+# Bzzzt! Illegal. Tuples are immutable.
+# family.append('Chloe')
+```
+
+### Slight aside: Tuple unpacking
+Tuples can be "unpacked". So can lists, but this is most common with tuples. This means that you can assign tuples elements to variables if you separate them by comma, like this:
+
+```{python}
+instructor = ("Noelle", "Brown")
+first, last = instructor
+```
+
+```{python}
+first
+```
+
+```{python}
+last
+```
+
+We'll see tuple unpacking a few times throughout the course.
+
+
+## Sets
+We'll see sets pretty much never, but they're worth mentioning very briefly. They're unordered, unique collections. Just like traditional sets in a math class.
+
+```{python}
+my_grades = {'A', 'B+', 'A', 'C+', 'B-', 'B+', 'F'}
+my_grades
+```
+
+```{python}
+
+my_grades
+```
+
+```{python}
+
+my_grades
+```
+
+```{python}
+'B+' in my_grades
+```
+
+```{python}
+your_grades = {'B+', 'B-', 'F-'}
+```
+
+```{python}
+my_grades.intersection(your_grades)
+```
+
+```{python}
+my_grades.union(your_grades)
+```
+
+## Dictionaries!
+
+![](imgs/phonebook.jpeg)
+
+Dictionaries are very common. They're unordered, mutable key-value pairs. Think of them like an actual dictionary. The key is the "word" and the value is the "definition".
+
+```{python}
+
+```
+
+```{python}
+# Indexing
+```
+
+```{python}
+# Bzzt! Remember, dictionaries are unordered. No such thing as "first" element
+# music[0]
+```
+
+```{python}
+
+```
+
+```{python}
+# This is how you can delete a key. But keep in mind, if you need to do this, you're
+# better off with a different data type. Perhaps a custom class.
+# (We'll learn about classes and OOP in a few weeks).
+```
+
+```{python}
+
+```
+
+```{python}
+# What happens when we attempt to access a missing entry?
+# music['doe']
+```
+
+```{python}
+# You often want to have a "default" value for keys that don't exist.
+# We can do this with the .get() method.
+# Fun fact: some people ONLY access dictionary keys with the .get().
+# This is starting to gain some traction and is thought to be a pretty good idea.
+```
+
+## Dictionaries are a big deal!
+
+Dictionaries can get really big and really complicated, like the one below. You might think this is excessive, but it's very common. This is a very efficient way to store complicated data that don't fit neatly in a spreadsheet. In fact, dictionaries are the data type used by most web APIs! We'll need to parse big dictionaries to get data from the internet!
+
+```{python}
+authors = {
+    "J.R.R. Tolkien": {
+        "genre": "fantasy",
+        "books": [
+            "The Fellowship of the Ring",
+            "The Two Towers",
+            "The Return of the King"
+        ],
+        "active": False
+    },
+    "Brandon Sanderson": {
+        "genre": "fantasy",
+        "books": [
+            "The Way of Kings",
+            "Words of Radiance",
+            "Oathbringer"
+        ],
+        "active": True,
+        "phone": {
+            "home": "(281) 330-8004",
+            "work": "(877) CASH-NOW"
+        }
+    },
+    "Frank Herbert": {
+        "genre": "science fiction",
+        "books": ["Dune"],
+        "phone": None,
+        "active": False
+    }
+}
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+## Booleans
+
+![](imgs/boole.jpg)
+
+Booleans are variables that only have two different values: `True` and `False`. They're named after their founder, **George Boole** and will come in real handy when we discuss control flow this afternoon.
+
+Booleans really only have three operations you can perform on them: `not`, `and`, and `or`.
+
+```{python}
+# not: Simply gives the opposite
+```
+
+```{python}
+
+```
+
+```{python}
+# and: A and B only yields True if both A and B are true
+sky_blue = True
+grass_green = True
+pigs_fly = False
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+```{python}
+# or: A and B only yields false if both A and B are false
+matt_cool = False
+```
+
+```{python}
+
+```
+
+```{python}
+
+```
+
+## Cool story, Boole
+So what? We rarely actually define variables to be `True` or `False`. More often, we get them from asking Python math problems.
+
+```{python}
+# Greater than
+```
+
+```{python}
+# Less than
+```
+
+```{python}
+# Greater than or equal to
+```
+
+```{python}
+# THREAD: Fun stuff
+```
+
+```{python}
+# Not equals to
+```
+
+```{python}
+# Equals to
+```
+
+## Food for thought
+- Why does `0.2 + 0.1 == 0.3` yield the answer it does?
+- Why does `True == 1` yield the answer it does?
+- Why does `"3" + 3` yield an error?
+- What happens when you add two lists?
+- What happens when you multiply a list (or a string!) by an integer? Why does this happen?
+    - e.g. `"*" * 20` or `[1, 2, 3, 4] * 2`
+
+
+## Practice Problems
+1. The sum of two numbers is 104 and their difference is 32. What is the value of the larger number?
+
+```{python}
+
+```
+
+2. You are given a list of numbers: `numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]`. Print out the positive even numbers in the list in reverse order.
+
+```{python}
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+```
+
+```{python}
+
+```
+
+3. Given the following dictionary `my_dict`, construct a new dictionary called `names` where the keys are the names of the people and the values are cities those people live in.
+
+```python
+my_dict = {0: {'name': 'Noelle',
+             'city': 'DEN',
+             'state': 'CO'},
+          1: {'name': 'Dan',
+             'city': 'LA',
+             'state': 'CA'},
+          2: {'name': 'Riley',
+             'city': 'AUS',
+             'state': 'TX'}
+        }
+```
+
+```{python}
+my_dict = {0: {'name': 'Noelle',
+             'city': 'DEN',
+             'state': 'CO'},
+          1: {'name': 'Dan',
+             'city': 'LA',
+             'state': 'CA'},
+          2: {'name': 'Riley',
+             'city': 'AUS',
+             'state': 'TX'}
+        }
+```
+
+```{python}
+
+```
+
+## Today we covered...
+- Basic Jupyter Notebook use
+- Basic math in Python
+- String manipulation in Python
+- Collection data types in Python
+- Booleans in Python
+
+```{python}
+
+```
