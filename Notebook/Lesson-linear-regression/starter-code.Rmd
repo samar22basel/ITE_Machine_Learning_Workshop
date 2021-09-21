@@ -34,6 +34,13 @@ _Authors:_ Mahesh
 ```{python}
 # Imports
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.linear_model import LinearRegression
+from sklearn import metrics
 ```
 
 # Part I: Simple Linear Regression
@@ -58,12 +65,14 @@ elec = pd.read_csv("./data/elecdemand.csv")
 elec = elec[elec["temp"] > 15]
 
 # view it
-
+elec.head()
 ```
 
 ```{python}
 # Plot temperature vs. demand
-
+plt.scatter(elec['temp'], elec['demand'],s=1)
+plt.xlabel('Temperature')
+plt.ylabel('Demand')
 ```
 
 ## The Null model
@@ -74,11 +83,12 @@ We don't have much information yet, so probably just the mean demand!
 </details>
 
 ```{python}
-
+elec['demand'].mean()
 ```
 
 ```{python}
-
+plt.scatter(elec["temp"],elec['demand'],s=1)
+plt.axhline(elec['demand'].mean(),color='orange')
 ```
 
 ## How could we improve our model?
@@ -158,7 +168,12 @@ In the simple linear regression case, p = 1. We have one feature ($x_1$). Usuall
 # Step 1: Assemble our X and y variables
 
 # We need an X matrix that is n-by-p (in this case, p = 1)
-X = 
+X = elec[['temp']]
+
+```
+
+```{python}
+X.shape
 ```
 
 #### Why did we make X a DataFrame?
@@ -168,11 +183,11 @@ y is the outcome variable
 
 ```{python}
 # We need a y vector that is length n
-y = 
+y = elec['demand']
 ```
 
 ```{python}
-
+y.shape
 ```
 
 #### Why is the target a Series or 1D numpy array? 
@@ -184,21 +199,25 @@ Scikit-learn supervised learning estimators are expecting a single output column
 
 ```{python}
 # Step 2: Instantiate the model
-
+lr = LinearRegression()
 ```
 
 ### Step 3: Fit the model
 
 ```{python}
 # Step 3: Fit the model
-
+lr.fit(X,y)
 ```
 
 ### Step 4: Check out and interpret our model weights
 
 ```{python}
 # Take a peek at the model coefficient and intercept
+print(lr.intercept_)
+```
 
+```{python}
+print(lr.coef_)
 ```
 
 We now have the following model of reality:
@@ -231,7 +250,7 @@ We do this for all the x values.
 
 ```{python}
 # Make predictions
-
+y_pred = lr.predict(X)
 ```
 
 #### Why don't we pass `y`?
@@ -240,7 +259,8 @@ We are predicting y.
 
 ```{python}
 # We can plot them, too!
-
+plt.scatter(elec['temp'],elec['demand'],s=1)
+plt.plot(elec['temp'],y_pred,color= 'orange')
 ```
 
 ---

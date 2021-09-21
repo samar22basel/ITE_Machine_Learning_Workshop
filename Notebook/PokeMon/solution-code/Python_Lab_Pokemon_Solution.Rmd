@@ -1,0 +1,805 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+Data Structures and Python with Pokemon
+
+## Building "Pokemon Stay"
+
+---
+You are an analyst at a "scrappy" online gaming company that specializes in remakes of last year's fads.
+
+Your boss, who runs the product development team, is convinced that Pokemon Go's fatal flaw was that you had to actually move around outside. She has design mock-ups for a new game called "Pokemon Stay." in this version players still need to move, but just from website to website. Pokemon gyms are now popular online destinations, and catching Pokemon in the "wild" simply requires browsing the internet for hours in the comfort of your home.
+
+
+## Before we start
+
+---
+We're going to take a quick minute to explore nesting behavior of dictionaries and lists. Consider the following data:
+
+```{python}
+dsi_lecture_times = {
+    'WC': {
+        'LA': {
+            'M': [9, 2],
+            'T': [9, 2],
+            'W': [9, 2],
+            'Th': [9],
+            'F': [9]},
+        'SEA': {
+            'M': [9, 2],
+            'T': [9, 2],
+            'W': [9, 2],
+            'Th': [9],
+            'F': [9]},
+        'DEN': {
+            'M': [10, 3],
+            'T': [10, 3],
+            'W': [10, 3],
+            'Th': [10],
+            'F': [10]},
+        'SF': {
+            'M': [9, 2],
+            'T': [9, 2],
+            'W': [9, 2],
+            'Th': [9],
+            'F': [9]}},
+    'EC': {
+        'BOS': {
+            'M': [10, 3],
+            'T': [10, 3],
+            'W': [10, 3],
+            'Th': [10],
+            'F': [10]},
+        'NYC': {
+            'M': [10, 3],
+            'T': [10, 3],
+            'W': [10, 3],
+            'Th': [10],
+            'F': [10]},
+        'DC': {
+            'M': [10, 3],
+            'T': [10, 3],
+            'W': [10, 3],
+            'Th': [10],
+            'F': [10]},
+        'ATX': {
+            'M': [9, 2],
+            'T': [9, 2],
+            'W': [9, 2],
+            'Th': [9],
+            'F': [9]},
+        'CHI': {
+            'M': [9, 2],
+            'T': [9, 2],
+            'W': [9, 2],
+            'Th': [9],
+            'F': [9]},
+        'ATL': {
+            'M': [10, 3],
+            'T': [10, 3],
+            'W': [10, 3],
+            'Th': [10],
+            'F': [10]}}
+    }
+```
+
+This dictionary contains the start times for the global lectures for each of the 10 DSI-CC campuses. The top level indicates the coast. The next level contains the 2 or 3 letter city codes corresponding to the campuses. The next level contains the 5 days of the week; each day of the week contains a list of 1 or 2 integers corresponding to the start time(s) of the day's lectures.
+
+Let's set our objective as accessing the **start time of the second Wednesday lecture in Chicago**.
+
+Let's look at how the whole dict is rendered as an output in a Jupyter.
+
+```{python}
+dsi_lecture_times
+```
+
+We can see that curly braces (i.e., `{}`) and individual spaces are used to separate layers. Because this can be hard to see, oftentimes we'll use the `keys` method on a dictionary to see what the current level of a dictionary contains. If we approach a dict one level at a time, it's easy to drill down to our objective.
+
+```{python}
+dsi_lecture_times.keys()
+```
+
+Once you identify the key you want to access, use square brackets (i.e., `[]`) to access the value associated with that key.
+
+```{python}
+dsi_lecture_times['EC']
+```
+
+It appears that we're still working with a dict. Let's check the type.
+
+```{python}
+type(dsi_lecture_times['EC'])
+```
+
+It is, in fact, a dictionary. This means that we can use dictionary methods on it. Let's look at the keys.
+
+```{python}
+dsi_lecture_times['EC'].keys()
+```
+
+We can continue to add `[]` with our desired key because **`dsi_lecture_times['EC']`** points directly to a dict and operates in the same way a variable name pointing to a dict would.
+
+```{python}
+dsi_lecture_times['EC']['CHI']
+```
+
+At this point, you can probably guess how we can access the times for Wednesday. Just add the `['W']` key.
+
+```{python}
+dsi_lecture_times['EC']['CHI']['W']
+```
+
+Let's check the type of this final level.
+
+```{python}
+type(dsi_lecture_times['EC']['CHI']['W'])
+```
+
+Because it is a `list` and lists are 0-indexed, to capture the time of the 2nd lecture, we'll use `[1]`. So, to directly access the time of the afternoon lecture in Chicago on Wedensdays, we'll use the following:
+
+```{python}
+dsi_lecture_times['EC']['CHI']['W'][1]
+```
+
+**Don't get overwhelmed trying to go directly to your target.** Drill down through your data one level at a time, and you're less likely to get lost.
+___
+
+Now, let's [dig(lett)](https://pokemondb.net/pokedex/diglett) into some Pokemon data.
+
+![diglett](../images/diglett.jpg)
+
+Remember, nested dicts aren't aren't [magik(arp)](https://pokemondb.net/pokedex/magikarp).
+
+![magikarp](../images/magikarp.jpg)
+
+
+## 1. Defining a player
+
+Each player needs to have a set of characteristics, stored in variables, such as an id, a username, play data, etc. A great structure to house these variables is a `dictionary`, because the `values` can contain any python datatype including `list`, `dict`, `tuple`, `int`, `float`, `bool`, or `str`. 
+
+The player variables are:
+
+    player_id : id code unique to each player (integer)
+    player_name : entered name of the player (string)
+    time_played : number of time played the game in minutes (float)
+    player_pokemon: the player's captured pokemon (dictionary)
+    gyms_visited: ids of the gyms that a player has visited (list)
+
+### A) Create a `dict` for a single player.
+
+* The variable name should be `player_1`.
+* The `player_id` should be 1.
+* Since the player doesn't have a name yet, you may set the `player_name` equal to `None`.
+* The rest of the fields should be populated properly depending on the datatype.
+
+```{python}
+player_1 = {
+    'player_id' : 1,
+    'player_name' : None,
+    'time_played' : 0.0,
+    'player_pokemon': {},
+    'gyms_visited': [],
+}
+```
+
+### B) Create a `dict` to house your dataset of players.
+
+* The dictionary storing your players should be called `poke_players`.
+* Because only `player_1` exists, there should only be one `key:value` pair. 
+* The `keys` of this `dict` should be the `player_id`, and the `values` should be the dictionaries with single-player info, including the `player_id` (slightly redundant).
+
+Make sure to check that your `poke_players` dictionary looks right after you've added `player_1`. To see the contents of a variable, just run a code cell with the variable name in it.
+
+```{python}
+poke_players = {
+    player_1['player_id']:player_1
+}
+
+poke_players
+```
+
+### C) Update player 1's info with your own.
+
+* By indexing your `poke_players` dictionary, update the `player_name` field to your own name.
+* Display the `poke_players` dict to check your work.
+
+```{python}
+# accessing a nested dictionary requires us to go layer by layer
+poke_players[1]['player_name'] = 'Ash'
+poke_players
+```
+
+### D) Define a function that adds a player to `poke_players`.
+
+Your function should...
+
+* Take arguments for `players_dict`, `player_id`, and `player_name`.
+* Create a player with the above values and populate the `gyms_visited`, `player_pokemon`, and `time_played` accordingly.
+* Add a second player to the `players` dictionary. The id should be 2, but the name is up to you!
+
+Display your `poke_players` to check your work.
+
+
+### E) Add a new player
+
+* Add a second player to the `poke_players` dictionary using the `add_player` function. The `id` should be 2, but the `name` is up to you!
+* Reassign and overwrite the `poke_players` dictionary.
+
+Make sure to display the contents of `poke_players` to check your work.
+
+```{python}
+# function takes 3 arguments: the players_dict where the new player will be added
+# `player_id` and `player_name` are used create the new_player
+def add_player(players_dict, player_id, player_name):
+    new_player = {
+        'player_id': player_id,
+        'player_name': player_name,
+        'player_pokemon': {}, # player_pokemon, gyms_visited and time_played have default values
+        'gyms_visited': [],
+        'time_played': 0.0
+    }
+    players_dict[new_player['player_id']] = new_player # once again using a value in the existing dict to create said 
+                                            # dicts key in the players_dict
+    print("{} added!".format(new_player['player_name']))
+```
+
+```{python}
+add_player(poke_players, 2, 'Joshua')
+```
+
+```{python}
+poke_players
+```
+
+## 2. Defining "gym" locations
+
+---
+
+As the sole programmer, Pokemon Stay will have to start small. To begin, there will be 10 different gym location websites on the internet. The gym locations are:
+
+    1. 'reddit.com'
+    2. 'amazon.com'
+    3. 'twitter.com'
+    4. 'linkedin.com'
+    5. 'ebay.com'
+    6. 'netflix.com'
+    7. 'stackoverflow.com'
+    8. 'github.com'
+    9. 'quora.com'
+    10. 'google.com'
+
+* Set up a list of all the gym locations. This will be a list of strings. Print the list to check your work.
+* For each player in `poke_players`, use `sample` (imported from `random` below) to randomly select 2 gyms and add these gyms to the `gyms_visited` field.
+* Display the `poke_players` dict to check your work.
+
+```{python}
+from random import sample
+```
+
+```{python}
+# Run this cell a few times to understand sample. Play around with the function!
+this_list = ['apple', 1, ('a','b','c'), 0.8]
+sample(this_list, 3)
+```
+
+```{python}
+gyms = [
+    'reddit.com',
+    'amazon.com',
+    'twitter.com',
+    'linkedin.com',
+    'ebay.com',
+    'netflix.com',
+    'stackoverflow.com',
+    'github.com',
+    'quora.com',
+    'google.com',
+]
+```
+
+```{python}
+for player_id in poke_players.keys():
+    poke_players[player_id]['gyms_visited'].extend(sample(gyms,2)) # extend allows us to add a list to the end of another
+```
+
+```{python}
+# the above code was ran twice so each player visisted 4 gyms
+poke_players
+```
+
+<!-- #region -->
+## 3. Create a Pokedex
+
+We also need to create some Pokemon to catch! Let's store the attributes of each Pokemon in a `dictionary`, since each Pokemon has many characteristics we'd like to store.
+
+
+Each Pokemon will be defined by these variables:
+
+    poke_id : unique identifier for each Pokemon (integer, sequential)
+    poke_name : the name of the Pokemon (string)
+    poke_type : the category of Pokemon (string)
+    hp : base hit points (integer between 400 and 500)
+    attack : base attack (integer between 50 and 100)
+    defense : base defense (integer between 50 and 100)
+    special_attack : base special attack (integer between 100 and 150)
+    special_defense : base special defense (integer between 100 and 150)
+    speed : base speed (integer between 0 and 100)
+
+### A) Create a function called `create_pokemon`
+
+* The function should take arguments for `poke_id`, `poke_name`, and `poke_type`.
+* Use `np.random.randint` to generate values for the numeric attributes based on the conditions above. If you're not clear on how this function works, there is a cell below with an example. Play around with it!
+* The function should return a `dict` for the Pokemon.
+* Without assigning it to a variable, check the function's output by calling it with the following arguments:
+  * `poke_id = 1`
+  * `poke_name = 'charmander'`
+  * `poke_type = 'fire'`
+<!-- #endregion -->
+
+```{python}
+import numpy as np
+```
+
+```{python}
+# Play around with this cell to understand np.random.randint!
+
+np.random.randint(0,10)
+```
+
+```{python}
+# pretty simple, a function that returns a dictionary
+def create_pokemon(poke_id, poke_name, poke_type):
+    return {
+        'poke_id': poke_id,
+        'poke_name': poke_name,
+        'poke_type': poke_type,
+        'hp': np.random.randint(400,500), 
+        'attack': np.random.randint(50,100),
+        'defense': np.random.randint(50,100),
+        'special_attack': np.random.randint(100,150),
+        'special_defense': np.random.randint(100,150),
+        'speed': np.random.randint(0,100)
+    }
+```
+
+```{python}
+create_pokemon(3, 'bulbasaur', 'grass')
+```
+
+### B) Populate the `pokedex`!
+
+Now we need some Pokemon to catch. Let's create a dictionary to store the information!
+
+* Instantiate an empty dictionary called `pokedex`.
+* Define a function called `create_and_add_to_pokedex`. This function should...
+  * Take arguments for `pokedex`,  `poke_id`, `poke_name`, and `poke_type`.
+  * Uses the `create_pokemon` function you created earlier to create a pokemon using the provided `poke_id`, `poke_name`, and `poke_type`.
+  * Add a new `key:value` pair to the `pokedex` dictionary where:
+    * the `key` is the `poke_id`, and
+    * the `value` is the newly-created pokemon dict, including the `poke_id` (this is slightly redundant, but that's ok!)
+  * Prints the name of the Pokemon added to the Pokedex using `str.format()`
+* Add the following 3 Pokemon to your `pokedex` using `create_and_add_to_pokedex`:
+
+|Id|Name|Type|
+|---|---|---|
+|1|charmander|fire|
+|2|squirtle|water|
+|3|bulbasaur|poison|
+
+Display your `pokedex` to check your work. It should look something like...
+
+```python
+{1: {'attack': 64,
+  'defense': 59,
+  'hp': 495,
+  'poke_id': 1,
+  'poke_name': 'charmander',
+  'poke_type': 'fire',
+  'special_attack': 100,
+  ...
+```
+
+```{python}
+# empty pokedex to add pokemon to.  
+pokedex = {}
+```
+
+```{python}
+# use that last function we created inside of this function to create pokemon and add to the pokedex
+def create_and_add_to_pokedex(pokedex, poke_id, poke_name, poke_type, ):
+    poke = create_pokemon(poke_id, poke_name, poke_type)
+    pokedex[poke['poke_id']] = poke
+    return print("{} added to pokedex".format(poke['poke_name']))
+```
+
+```{python}
+pokedex
+```
+
+```{python}
+# create some pokemone for the dex
+create_and_add_to_pokedex(pokedex, 1, 'charmander', 'fire')
+create_and_add_to_pokedex(pokedex, 2, 'squirtle', 'water')
+create_and_add_to_pokedex(pokedex, 3, 'bulbasaur', 'poison')
+```
+
+```{python}
+pokedex
+```
+
+## 4. Let's capture some Pokemon!
+
+The `player_pokemon` keyed dictionaries for each player keep track of which of the Pokemon each player has.
+
+The keys of the `player_pokemon` dictionaries are the Pokemon ids that correspond to the ids in the `pokedex` dictionary you created earlier, and the values are the individual Pokemon dicts. Just like your `pokedex`, but for each player individually!
+
+* Define a function called `add_pokemon_to_player` that...
+  * Takes arguents for `player_id`, `poke_id`, `player_dict`, and `pokedex`.
+  * Adds the desired pokemon to the `player_pokemon` field of the specified player
+  * Prints which pokemon was added to which player.
+* Use your function to add squirtle to player 1, and add charmander and bulbasaur to player 2
+* Display your `poke_players` to check your work.
+
+```{python}
+# takes arguments player_id and poke_id and adds said pokemon to said players captured pokemon
+# there are two arguments that have default values, player_dict and pokedex,
+# default arguments means that that does not need to be expliticly stated as there is a default value for it.
+
+def add_pokemon_to_player(player_id, poke_id, player_dict = poke_players, pokedex = pokedex):
+    player_dict[player_id]['player_pokemon'][poke_id] = pokedex[poke_id]
+    print("{} added to {}'s player_pokemon!".format(pokedex[poke_id]['poke_name'], player_dict[player_id]['player_name']))
+```
+
+* Call your function three times to add
+    * squirtle to player 1
+    * charmander to player 2
+    * bulbasaur to player 2
+* Overwrite your poke_player variable each time with the updated dictionary.
+* Display the contents of poke_players to check your work.
+
+
+
+
+    Call your function three times to add
+        squirtle to player 1
+        charmander to player 2
+        bulbasaur to player 2
+    Overwrite your poke_player variable each time with the updated dictionary.
+    Display the contents of poke_players to check your work.
+
+
+
+```{python}
+# add some pokemon to some players
+add_pokemon_to_player(1, 2)
+add_pokemon_to_player(2,1)
+add_pokemon_to_player(2,3)
+```
+
+```{python}
+# players can have only 1 of each pokemon (Bulbasaur, Squirtle, Charmander)
+# all players can have a Bulbasaur or a Squirtle or a Charmander
+add_pokemon_to_player(1,3)
+```
+
+## 5. What gyms have players visited?
+
+### A) Checking gyms
+
+Write a for-loop that:
+
+1. Iterates through the `pokemon_gyms` list of gym locations you defined before.
+2. For each gym, iterate through each player in the `players` dictionary with a second, internal for-loop.
+3. If the player has visited the gym, print out "[player] has visited [gym location].", filling in [player] and [gym location] with the current player's name and current gym location.
+
+```{python}
+for gym in gyms: # look at each gym
+    for player_id, player_dict in poke_players.items(): # look at all the players and their gyms
+        if gym in player_dict['gyms_visited']: # if the current gym is one a player has visited
+            print("{} has visited {}".format(player_dict['player_name'], gym)) # print that they have visited it.
+```
+
+### B) Computational Complexity
+
+How many times did that loop run? If you have N gyms and also M players, how many times would it run as a function of N and M? 
+
+(You can write your answer as Markdown text.)
+
+
+$N \text{ gyms x } M \text{ players } = NxM$
+
+
+## 6. Calculate player "power".
+
+Define a function that will calculate a player's "power". Player power is defined as the sum of the base statistics all of their Pokemon.
+
+$$
+\text{player power } = \sum_{i = 1}^{n}\text{attack}_i + \text{defense}_i + \text{special attack}_i + \text{special defense}_i
+$$
+
+Where $i$ is an individual Pokemon in a player's `player_pokemon`. ($\sum$ just means sum, so you're just adding up all the attributes listed above for all the Pokemon in the player's `player_pokemon`).
+
+Your function should:
+
+*  Accept a `poke_players` dictionary and a `player_id` as arguments.
+*  For the specified player_id, look up that player's Pokemon.
+*  Find and aggregate the attack and defense values for each of the player's Pokemon.
+*  Print "[player name]'s power is [player power].", where the player power is the sum of the base statistics for all of their Pokemon.
+*  Return the player's power value.
+
+Check your work by displaying Pokemon power for each of your players.
+
+```{python}
+# 1 mantatory argument of the player ID
+# take that ID, go through all the pokemon said ID has
+# add up all the relevant stats and return that total value.
+def get_power(player_id, player_dict = poke_players):
+    power = 0.0 # base power to increment 
+    attrs = ['attack','defense','special_attack','special_defense'] # list of attributes that we want 
+    for poke_id, poke_dict in player_dict[player_id]['player_pokemon'].items(): # for each pokemon
+        for attr in attrs: # grad the attribute from the pokemon
+            power += poke_dict[attr] # add it to the power stat
+    print("{}'s power is {}".format(player_dict[player_id]['player_name'], power))
+    return power
+```
+
+```{python}
+# because values were randomized, yours will be different.  
+for player_id in poke_players.keys():
+    print(get_power(player_id))
+```
+
+## 7. Load a Pokedex file containing all the Pokemon
+
+### Load data using the `with open()` method.
+
+While you were putting together the prototype code, your colleagues were preparing a dataset of Pokemon and their attributes (This was a rush job, so they may have picked some crazy values for some...). Your task is to load the data into a list of lists so you can manipulate it.
+
+* The `type` of the data should be a `list`
+  * The `type` of each element in that list should be a `list`
+    * The `type` of each element in the sub-list should be `str` or `float`.
+
+The code provided loads the data into one looooong `str`. To get it into the correct format:
+* Use `your_string.replace()` to remove `"`, where `your_string` is any object of type `str`. 
+* Use `your_string.split()` to create a new row for each line. New lines are denoted with a `'\n'`.
+* Iterate through your data. Use `try/except` to cast numeric data as type `float`. 
+
+Your end result is effectively a matrix. Each list $i$ in the outer list is a row, and the $j$th elements of list together form the *j*th column, which represents a data attribute. The first three lists in your Pokedex list should look like this:
+
+    ['PokedexNumber', 'Name', 'Type', 'Total', 'HP', 'Attack', 'Defense', 'SpecialAttack', 'SpecialDefense', 'Speed']
+    [1.0, 'Bulbasaur', 'GrassPoison', 318.0, 45.0, 49.0, 49.0, 65.0, 65.0, 45.0]
+    [2.0, 'Ivysaur', 'GrassPoison', 405.0, 60.0, 62.0, 63.0, 80.0, 80.0, 60.0]
+    
+**WARNING:** Don't print or display your entire new pokedex! Viewing that many entries will clog up your notebook and make it difficult to read.
+
+```{python}
+# Code to read in pokedex info
+raw_pd = ''
+pokedex_file = 'pokedex_basic.csv'
+with open(pokedex_file, 'r') as f:
+    raw_pd = f.read()
+    
+# the pokedex string is assigned to the raw_pd variable
+# the file is read in as a single string where newlines `\n` divide records
+```
+
+```{python}
+# cleans and splits the single string into appropriate records
+newlines = raw_pd.replace('"','').split('\n')
+# each record is now its own string
+newlines[:3]
+```
+
+```{python}
+# splits record strings up into lists
+new_pd = []
+for line in newlines:
+    new_pd.append(line.split(','))
+    
+new_pd[:2]
+```
+
+```{python}
+# converts numeric values from strings to floats
+for i, line in enumerate(new_pd): # i == each record/row
+    for j, item in enumerate(line): # j == individual value in each record.
+        try:
+            new_pd[i][j] = float(item) # 
+        except:
+            pass
+```
+
+```{python}
+new_pd[:3]
+```
+
+## 8. Changing Types
+
+### A) Convert your data into a dictionary.
+
+Your `dict` should...
+* have `keys` of the new `pokedex` as the `PokedexNumber`
+* have `values` containing data for each pokemon in a dictionary form, just like our `pokedex` from before
+  * Keep in mind, the `keys` here are a little bit different than the original `pokedex`.
+  * Be careful of the header, you do not want to include that as a Pokemon.
+* **WARNING:** Don't display your entire `pokedex` when turning this in! Viewing that many entries will clog up your notebook and make it difficult to read. If you'd like to visualize your `pokedex`, index with a few of its `keys`.
+
+Your `new_pd_dict` should be organized like...
+
+```python
+{1.0: {'Attack': 49.0,
+  'Defense': 49.0,
+  'HP': 45.0,
+  'Name': 'Bulbasaur',
+  'PokedexNumber': 1.0,
+  'SpecialAttack': 65.0,
+  'SpecialDefense': 65.0,
+  'Speed': 45.0,
+  'Total': 318.0,
+  'Type': 'GrassPoison'},
+ 2.0: {'Attack': 62.0,
+  'Defense': 63.0,
+  'HP': 60.0,
+  'Name': 'Ivysaur',
+```
+
+```{python}
+header = new_pd[0] # extracting the column headers
+body = new_pd[1:] # all the pokemon values
+```
+
+```{python}
+new_pd_dict = {} # empty dict toa append to.
+
+for row in body:
+    poke = {i:j for i,j in zip(header, row)} # goes through each row and uses the header to create keys.
+    new_pd_dict[poke['PokedexNumber']] = poke
+```
+
+### B) (OPTIONAL) Orient your `new_pd_dict` by columns.
+
+Your new Pokedex is oriented by index, meaning that each entry is a row value. Your goal in this exercise is to orient the Pokedex dict by columns, meaning:
+
+* The keys of the dictionary are the column names
+* The values of the dictionary are a **column vector** of that feature.
+* **HINT:** Read documentation on `defaultdict` (`from collections import defaultdict`), this may help!
+* **BONUS:** Do this with list and/or dictionary comprehensions only
+
+```{python}
+from collections import defaultdict
+### The below three blocks are 3 solutions to the same problem.
+```
+
+```{python}
+# Base solution
+new_pd_dict_columns = {}
+
+# pretty much have values that contain all of a type of item
+# new_pd_dict_columns['poke_name'] = [Every pokemons name]
+
+# creating place holders
+for col_name in header:
+    new_pd_dict_columns[col_name] = []
+
+for poke_id, single_poke_dict in new_pd_dict.items(): # go through every individual pokemons dict
+    for field, attribute in single_poke_dict.items(): # go through all the values in the dict
+        new_pd_dict_columns[field].append(attribute) 
+```
+
+```{python}
+### Using defaultdict
+new_pd_dict_columns = defaultdict(list)
+
+for poke_id, single_poke_dict in new_pd_dict.items():
+    for field, attribute in single_poke_dict.items():
+        new_pd_dict_columns[field].append(attribute)
+        
+
+```
+
+```{python}
+# Using list/dict comprehensions
+new_pd_dict_columns = {
+    col_name:[single_poke_dict[col_name] for poke_id, single_poke_dict in new_pd_dict.items()] for col_name in header
+}
+```
+
+## 9. (OPTIONAL) Write a function to filter your pokedex!
+
+Your goal in this exercise is to search your Pokedex based on your own defined criteria! Build a function that...
+
+* Takes arguments of: 
+  * a pokedex dict (can be either the row or column oriented dict, pick the one of your choice!)
+  * a `filter_options` dict (described below)
+* For parameters in your `filter_dict`, your function should return:
+  * pokemon that are >= (greater than or equal to) the value you passed in your `filter_dict` for that field for continuous values
+  * pokemon of that name or type for string values (equal)
+* Return a list of the individual pokemon dictionaries that meet your search criteria!
+
+Example:
+
+```python
+
+# Only filter based on parameters passed
+filter_options = {
+    'Attack':   25,
+    'Defense':  30,
+    'Type':     'Electric'
+}
+
+# Return records with attack >= 24, defense >= 30, and type == "Electric"
+# Also anticipate that other parameters can also be passed such as "SpecialAttack", "Speed", etc.
+filtered_pokedex(pokedex_data, filter=filter_options)
+
+# Example output:
+# [{'Attack': 30.0,
+#  'Defense': 50.0,
+#  'HP': 40.0,
+#  'Name': 'Voltorb',
+#  'SpecialAttack': 55.0,
+#  'SpecialDefense': 55.0,
+#  'Speed': 100.0,
+#  'Total': 330.0,
+#  'Type': 'Electric'},
+#  {'Attack': 30.0,
+#  'Defense': 33.0,
+#  'HP': 32.0,
+#  'Name': 'Pikachu',
+#  'SpecialAttack': 55.0,
+#  'SpecialDefense': 55.0,
+#  'Speed': 100.0,
+#  'Total': 330.0,
+#  'Type': 'Electric'},
+#  ... etc
+#  ]
+
+```
+
+
+
+```{python}
+from collections import Counter
+```
+
+```{python}
+# Example where orient is rows, not columns
+def filter_pokemon(pokedex, filter_dict):
+    results = [] # results of query
+    num_filters = len(list(filter_dict.keys())) # number of items looking for in our filter
+    for poke_id, poke_attr_dict in pokedex.items():
+        counter = 0 # used to count individual matches associate with our filter
+        for field, value in filter_dict.items(): # 
+            if type(value) is str: # if the filter value is a string
+                if value == poke_attr_dict[field]: # check for exact match
+                    counter += 1 # if true +1 to matched filter fields
+            else: # if filter value is a float
+                if poke_attr_dict[field] >= value: # check for equal to or greater values
+                    counter += 1 # if true +1 to matched filter fields
+        if counter == num_filters: # if we have an equal amount of passable fields to filter fields
+            results.append(poke_attr_dict) # append the pokemon
+    return results
+```
+
+```{python}
+filter_dict = {'SpecialAttack':50,
+               'Type':'GrassPoison',
+               'Defense':80}
+filter_pokemon(new_pd_dict, filter_dict)
+```
