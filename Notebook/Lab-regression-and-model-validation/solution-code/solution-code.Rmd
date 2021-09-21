@@ -1,0 +1,364 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+# Lab 3_01: Statistical Modeling and Model Validation
+
+> Authors: Tim Book, Matt Brems
+
+---
+
+
+## Objective
+The goal of this lab is to guide you through the modeling workflow to produce the best model you can. In this lesson, you will follow all best practices when slicing your data and validating your model. 
+
+
+## Imports
+
+```{python}
+# Import everything you need here.
+# You may want to return to this cell to import more things later in the lab.
+# DO NOT COPY AND PASTE FROM OUR CLASS SLIDES!
+# Muscle memory is important!
+
+import pandas as pd
+from scipy.stats import ttest_ind
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
+
+import matplotlib.pyplot as plt
+
+import statsmodels.api as sm
+
+# %matplotlib inline
+```
+
+## Read Data
+The `citibike` dataset consists of Citi Bike ridership data for over 224,000 rides in February 2014.
+
+```{python}
+# Read in the citibike data in the data folder in this repository.
+citibike = pd.read_csv('../data/citibike_feb2014.csv')
+```
+
+## Explore the data
+Use this space to familiarize yourself with the data.
+
+Convince yourself there are no issues with the data. If you find any issues, clean them here.
+
+```{python}
+# Check first five rows.
+citibike.head()
+```
+
+```{python}
+# Check datatypes and numbers of non-null values.
+citibike.info()
+```
+
+```{python}
+# Summarize all variables.
+citibike.describe(include='all')
+```
+
+```{python}
+# Check for missing values. (This is easier to read 
+# than the .info() output.)
+citibike.isnull().sum()
+```
+
+## Is average trip duration different by gender?
+
+Conduct a hypothesis test that checks whether or not the average trip duration is different for `gender=1` and `gender=2`. Be sure to specify your null and alternative hypotheses, and to state your conclusion carefully and correctly!
+
+
+$$
+\begin{eqnarray*}
+&H_0:& \mu_1 = \mu_2 \\
+&H_A:& \mu_1 \neq \mu_2
+\end{eqnarray*}
+$$
+
+We will conduct this test assuming $\alpha=0.05$.
+
+```{python}
+ttest_ind(citibike[citibike['gender'] == 1]['tripduration'],
+          citibike[citibike['gender'] == 2]['tripduration'])
+```
+
+**Answer**: Our $t$-statistic is -5.93 and our $p$-value is very, very small. Because $p$ is smaller than $\alpha$, we reject our null hypothesis and accept that $\mu_1 \neq \mu_2$. This means that we accept that the average trip duration is different for `gender=1` and `gender=2`.
+
+
+## What numeric columns shouldn't be treated as numeric?
+
+
+**Answer:** The `start station id`, `end station id`, and `bikeid` columns are all categorical in nature (e.g. adding two of these ID numbers together would be meaningless). These are technically integers, but should not be treated that way.
+
+
+## Dummify the `start station id` Variable
+
+```{python}
+# Before dummifying, let's see how many columns we should create.
+len(set(citibike['start station id']))
+```
+
+```{python}
+# How many columns are there in the original data?
+len(citibike.columns)
+```
+
+```{python}
+# Let's dummy the data.
+citibike = pd.get_dummies(citibike,
+                          columns=['start station id'],
+                          drop_first=True)
+```
+
+```{python}
+# How many columns are there now?
+len(citibike.columns)
+```
+
+```{python}
+# 329 unique values + 15 original columns  = 344.
+# We dropped the `start station id` variable: 344 - 1 = 343.
+# We set `drop_first = True`: 343 - 1 = 342.
+
+# We got the right number of columns in our output!
+
+# Let's check out our data to make sure it looks like we did this right.
+citibike.head()
+```
+
+## Engineer a feature called `age` that shares how old the person would have been in 2014 (at the time the data was collected).
+
+- Note: you will need to clean the data a bit.
+
+```{python}
+# First attempt.
+citibike['age'] = 2014 - citibike['birth year']
+```
+
+```{python}
+# We got an error! Somewhere, there's a string.
+
+# Check the values in the birth year column.
+citibike['birth year'].value_counts()
+```
+
+```{python}
+# Can we just pull out the strings?
+
+# Iterate through all unique values in birth year column.
+for i in set(citibike['birth year']):
+
+    # Try typecasting each value to be an integer.
+    try:
+        int(i)
+        
+    # If it gives you an error (so it can't be
+    # printed as an integer), print the value.
+    except:
+        print(i)
+```
+
+```{python}
+# How many values of "\N" are there?
+citibike[citibike['birth year'] == '\N'].shape[0]
+```
+
+```{python}
+# How many values of "\N" are there?
+# We got an error - it interprets \ as an escape character.
+# We need to use the escape character twice!
+citibike[citibike['birth year'] == '\\N'].shape[0]
+```
+
+```{python}
+# There's 6,717 values, which is just under 3% of the rows.
+# Let's replace "\N" with np.nan.
+
+citibike.loc[citibike['birth year'] == '\\N','birth year'] = np.nan
+```
+
+```{python}
+# Did we successfully do this?
+citibike.isnull().sum()
+```
+
+```{python}
+# Now let's try creating our age column.
+citibike['age'] = citibike['birth year'].map(lambda x: 2014 - int(x),
+                                             na_action = 'ignore')
+```
+
+```{python}
+# Let's check to see if age and birth year seem to match up.
+citibike['age'].hist();
+```
+
+```{python}
+citibike['birth year'].dropna().astype(int).hist();
+# Yes, birth year is a mirror image of age.
+```
+
+## Split your data into train/test data
+
+Look at the size of your data. What is a good proportion for your split? **Justify your answer.**
+
+Use the `tripduration` column as your `y` variable.
+
+For your `X` variables, use `age`, `usertype`, `gender`, and the dummy variables you created from `start station id`. (Hint: You may find the Pandas `.drop()` method helpful here.)
+
+**NOTE:** When doing your train/test split, please use random seed 123.
+
+```{python}
+# Because usertype is a column of strings, we must
+# dummy that column as well.
+citibike = pd.get_dummies(citibike,
+                          columns=['usertype'],
+                          drop_first=True)
+```
+
+```{python}
+X_train, X_test, y_train, y_test = train_test_split(citibike.dropna().drop(columns=['tripduration', 'birth year', 'bikeid',
+                                                                           'end station longitude', 'end station latitude',
+                                                                           'end station name', 'end station id',
+                                                                           'start station longitude', 'start station latitude',
+                                                                           'start station name', 'starttime', 'stoptime']),
+                                                    citibike.dropna()['tripduration'],
+                                                    test_size=0.2,
+                                                    random_state=123)
+```
+
+```{python}
+X_train.head()
+```
+
+```{python}
+X_test.shape
+```
+
+**Answer**: The more data we train on, the better it will usually perform! I used `test_size = 0.2` because we have lots of data. This leaves a lot of data (about 43,600 rows!) in our test set to still evaluate our model.
+
+
+## Fit a Linear Regression model in `sklearn` predicting `tripduration`.
+
+```{python}
+# Step 1. Instantiate the model.
+model = LinearRegression()
+
+# Step 2. Fit the model on the training data.
+model.fit(X_train, y_train)
+
+# Step 3. Generate predictions.
+preds = model.predict(X_test)
+```
+
+## Evaluate your model
+Look at some evaluation metrics for **both** the training and test data. 
+- How did your model do? Is it overfit, underfit, or neither?
+- Does this model outperform the baseline? (e.g. setting $\hat{y}$ to be the mean of our training `y` values.)
+
+```{python}
+# Check the MSE on the training and testing sets.
+
+print(f'MSE on testing set: {mean_squared_error(y_train, model.predict(X_train))}')
+print(f'MSE on training set: {mean_squared_error(y_test, preds)}')
+```
+
+```{python}
+# Check the R^2 on the training and testing sets.
+
+print(f'R^2 on testing set: {r2_score(y_train, model.predict(X_train))}')
+print(f'R^2 on training set: {r2_score(y_test, preds)}')
+```
+
+**Answer**:  Based on the MSE, our model is performing far worse on the testing set than on the training set, which means that our model is likely overfit to the data.
+
+Based on the $R^2$, our model is explaining approximately zero variance in the $Y$ data. Our model is probably quite bad.
+
+```{python}
+plt.figure(figsize = (12, 9))
+
+# Examine the relationship between observed and predicted values.
+plt.scatter(y_test, preds)
+
+# Line showing perfect predictions.
+plt.plot([0, max(max(y_test),max(preds))],
+         [0, max(max(y_test),max(preds))],
+         linestyle = '--')
+
+plt.title('Predicted values are quite small,\nbut true values are spread out!', fontsize = 24)
+plt.xlabel('True Values', fontsize = 16)
+plt.ylabel('Predicted Values', fontsize = 16);
+```
+
+```{python}
+print(f'MSE of baseline model: {mean_squared_error(y_test, [np.mean(y_train)] * len(y_test))}')
+```
+
+```{python}
+print(f'R^2 of baseline model: {r2_score(y_test, [np.mean(y_train)] * len(y_test))}')
+```
+
+**Answer**:  Based on the above information, I conclude that my model is both overfit to the data and a bad model.
+- Our MSE and $R^2$ comparing our observed `y_test` values to the average `y_train` value are better than the MSE and $R^2$ on the more complex model we've fit on the training dataset!
+- I might try removing features to improve the fit of the model.
+
+
+## Fit a Linear Regression model in `statsmodels` predicting `tripduration`.
+
+```{python}
+# Remember, we need to add a constant in statsmodels!
+X_train = sm.add_constant(X_train)
+```
+
+```{python}
+model_sm = sm.OLS(y_train, X_train).fit()
+```
+
+## Using the `statsmodels` summary, test whether or not `age` has a significant effect when predicting `tripduration`.
+- Be sure to specify your null and alternative hypotheses, and to state your conclusion carefully and correctly **in the context of your model**!
+
+```{python}
+model_sm.summary()
+```
+
+$$
+\begin{eqnarray*}
+&H_0:& \beta_{age} = 0 \\
+&H_A:& \beta_{age} \neq 0
+\end{eqnarray*}
+$$
+
+We will conduct this test assuming $\alpha=0.05$.
+
+**Answer**: The $p$-value for `age` (found in the `model_sm.summary()` table) is less than 0.001, which means that $p < \alpha$ and we will reject $H_0$. This means we accept our alternative hypothesis, $H_A$, and accept that `age` is a significant predictor of `tripduration`.
+
+
+## Citi Bike is attempting to market to people who they think will ride their bike for a long time. Based on your modeling, what types of individuals should Citi Bike market toward?
+
+
+**Answer:** Based on the two hypothesis tests we've run, `age` and `gender` are significant predictors of `tripduration`. If we look at the coefficients for `age` and `gender`, both coefficients are positive, indicating that as `age` and `gender` increase, `tripduration` increases. Based on this alone, we should market toward individuals of older age who identify as `gender=2`. (We should consult a data dictionary to figure out what `2` means, but there isn't one here!)
+
+However, our model performance is quite bad! Our predicted values aren't close to our observed values, and our $R^2$ values are terrible. We may want to iterate on our model and try to improve it before using it to make any serious decisions.

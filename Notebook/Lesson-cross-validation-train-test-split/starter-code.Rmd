@@ -1,0 +1,424 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+# Cross-Validation Lesson
+
+_Authors: Dave Yerrington (SF), Joseph Nelson (DC), Kiefer Katovich (SF), Riley Dallas(AUS)_
+
+---
+
+### Learning Objectives
+- **Describe** train/test split and cross-validation.
+- **Explain** how these validation techniques differ and why we want to use them.
+- **Split** data into testing and training sets using both train/test split and cross-validation and **apply** both techniques to score a model.
+
+
+## Overfitting and Underfitting
+
+---
+
+
+![](http://tomrobertshaw.net/img/2015/12/overfitting.jpg)
+
+
+
+**What's wrong with the first model?**
+- The underfit model falls short of capturing the complexity of the "true model" of the data.
+
+**What's wrong with the third model?**
+- The overfit model is too complex and is modeling random noise in the data.
+
+**The middle model is a good compromise.**
+- It approximates the complexity of the true model and does not model random noise in our sample as true relationships.
+
+
+## Importing libraries
+
+---
+
+We'll need the following libraries for today's lesson:
+- `pandas`
+- `numpy`
+- `seaborn`
+- we'll need a `LinearRegression` from `sklearn.linear_model`
+- from `sklearn.model_selection` we'll need `train_test_split`, and `cross_val_score`
+
+```{python}
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+```
+
+<a id='demo'></a>
+
+## Load the Data
+
+---
+
+Today's dataset (`Advertising.csv`) is from the [ISLR website](https://www.statlearning.com/). 
+
+Drop `Unnamed: 0` once you've loaded the csv into a `DataFrame`.
+
+```{python}
+df = pd.read_csv('datasets/Advertising.csv')
+```
+
+```{python}
+df.head()
+```
+
+```{python}
+df.drop(columns='Unnamed: 0',axis=1,inplace=True)
+```
+
+```{python}
+df.head()
+```
+
+## Data cleaning
+---
+
+Check the following in the cells below:
+1. Do we have any null values?
+2. Do we have all numerical columns?
+
+```{python}
+# Check for nulls
+df.isnull().sum()
+```
+
+```{python}
+# Check column data types
+df.info()
+```
+
+```{python}
+df.dtypes
+```
+
+## EDA: Correlation Matrix Heatmap
+---
+
+Heatmaps are an effective way to visually examine the correlational structure of your predictors. 
+
+```{python}
+sns.heatmap(df.corr(),annot=True,vmin=-1,vmax=1,cmap='coolwarm')
+```
+
+## EDA: Pair Plot
+---
+
+Let's visualize our correlations from another angle. Use seaborn's `.pairplot()` method to create scatterplots for each of our columns.
+
+```{python}
+sns.pairplot(df)
+```
+
+<a id='x-y'></a>
+
+## Create our feature matrix (`X`) and target vector (`y`)
+---
+
+The following columns will be our features:
+- `TV`
+- `radio`
+- `newspaper`
+
+The `sales` column is our label: the column we're trying to predict.
+
+In the cell below, create your `X` and `y` variables.
+
+```{python}
+features = ['TV','radio','newspaper']
+```
+
+```{python}
+X=df[features]
+y=df['sales']
+```
+
+<!-- #region -->
+<a name="train-test-split"></a>
+## Train/Test Split and Model Validation
+
+---
+
+So far we've focused on fitting the best model to our data. But is this the best model for our sample data or the best model overall? How do we know?
+
+In practice we need to validate our model's ability to generalize to new data. One popular method for performing model validation is by splitting our data into subsets: data on which we *train* our model and data on which we *test* our model.
+
+The most basic type of "hold-out" validation is called **train/test split**. We split our data into two pieces:
+
+> **"A Training Set":** The subset of the data on which we fit our model.
+
+> **"A Testing Set":** The subset of the data on which we evaluate the quality of our predictions.
+
+
+**Train/Test Split Benefits:**
+
+- Testing data can represent "future" data; for prediction-oriented models, it's critical to ensure that a model that is performing well on current data will likely perform well on future data.
+- It can help diagnose and avoid overfitting via model tuning.
+- It can improve the quality of our predictions.
+<!-- #endregion -->
+
+<a id='sklearn-tts'></a>
+
+## Scikit-Learn's `train_test_split` Function
+---
+
+Performing train/test splits using scikit-learn is easy — load the `train_test_split` function:
+
+```python
+from sklearn.model_selection import train_test_split
+```
+
+**Arguments**:
+- *Arrays*: Any number of arrays/matrices to split up into training and testing sets (they should be the same length).
+- `test_size`: An integer representing the exact size of the testing subset or a float for a percentage.
+- `train_size`: Alternatively, you can specify the training size.
+- `stratify`: Supply a vector to stratify the splitting (by more important classification tasks).
+- `random_state`: a numerical seed for randomly splitting your data with reproducibility
+
+**Perform a split of our `X` and `y`.**
+
+```{python}
+X_train,X_test,y_train,y_test = train_test_split(X,y,random_state=2)
+```
+
+## Linear Regression model
+---
+
+In the cells below:
+1. create a `LinearRegression` model
+2. fit it to your **training data** (`X_train`, `y_train`)
+
+```{python}
+lr = LinearRegression()
+lr.fit(X_train,y_train)
+```
+
+## Model Evaluation
+---
+
+We need two scores to determine if our model is performing well, or experiencing high bias/variance. Use the `.score()` method on **both** the training set (`X_train`, `y_train`) and the test set (`X_test`, `y_test`).
+
+```python
+model.score(X_train, y_train)
+```
+
+```{python}
+# Train score
+lr.score(X_train, y_train)
+```
+
+```{python}
+# Test score
+lr.score(X_test, y_test)
+```
+
+<a id='cross-val-k-fold'></a>
+
+## K-Fold Cross-Validation
+
+---
+
+K-fold cross-validation takes the idea of a single train/test split and expands it to *multiple tests* across different train/test splits of your data.
+
+**K-fold cross-validation builds K models — one for each train/test pair — and evaluates those models on each respective test set.**
+
+### K-Fold Cross-Validation Visually
+
+<img src="https://snag.gy/o1lLcw.jpg?convert_to_webp=true" width="500">
+
+---
+
+Special Cases:
+- **When K=2**: This is equivalent to performing ***two*** mirror image 50-50 train/test splits.
+- **When K=number of rows**: This is known as "leave-one-out cross-validation," or LOOCV. A model is built on all but one row and tested on the single excluded observation.
+
+
+## K-Fold Example
+---
+
+To understand how cross validation is done, we'll manually code an example. 
+
+We'll choose `k` to be 5.
+
+```{python}
+X_1 = X_train.values[:30, :]
+y_1 = y_train.values[:30]
+
+X_2 = X_train.values[30:60, :]
+y_2 = y_train.values[30:60]
+
+X_3 = X_train.values[60:90, :]
+y_3 = y_train.values[60:90]
+
+X_4 = X_train.values[90:120, :]
+y_4 = y_train.values[90:120]
+
+X_5 = X_train.values[120:, :]
+y_5 = y_train.values[120:]
+```
+
+**First Test Score: `X_1`, `y_1`**
+
+```{python}
+X_fold = np.concatenate((X_2, X_3, X_4, X_5), axis=0)
+y_fold = np.concatenate((y_2, y_3, y_4, y_5), axis=0)
+
+lr_fold = LinearRegression()
+lr_fold.fit(X_fold, y_fold)
+score_1 = lr_fold.score(X_1, y_1)
+score_1
+```
+
+**Second Test Score: `X_2`, `y_2`**
+
+```{python}
+X_fold = np.concatenate((X_1, X_3, X_4, X_5), axis=0)
+y_fold = np.concatenate((y_1, y_3, y_4, y_5), axis=0)
+
+lr_fold = LinearRegression()
+lr_fold.fit(X_fold, y_fold)
+score_2 = lr_fold.score(X_2, y_2)
+score_2
+```
+
+**Third Test Score: `X_3`, `y_3`**
+
+```{python}
+X_fold = np.concatenate((X_1, X_2, X_4, X_5), axis=0)
+y_fold = np.concatenate((y_1, y_2, y_4, y_5), axis=0)
+
+lr_fold = LinearRegression()
+lr_fold.fit(X_fold, y_fold)
+score_3 = lr_fold.score(X_3, y_3)
+score_3
+```
+
+**Fourth Test Score: `X_4`, `y_4`**
+
+```{python}
+X_fold = np.concatenate((X_1, X_2, X_3, X_5), axis=0)
+y_fold = np.concatenate((y_1, y_2, y_3, y_5), axis=0)
+
+lr_fold = LinearRegression()
+lr_fold.fit(X_fold, y_fold)
+score_4 = lr_fold.score(X_4, y_4)
+score_4
+```
+
+**Fifth Test Score: `X_5`, `y_5`**
+
+```{python}
+X_fold = np.concatenate((X_1, X_2, X_3, X_4), axis=0)
+y_fold = np.concatenate((y_1, y_2, y_3, y_4), axis=0)
+
+lr_fold = LinearRegression()
+lr_fold.fit(X_fold, y_fold)
+score_5 = lr_fold.score(X_5, y_5)
+score_5
+```
+
+**Average Them Together**
+
+The average of our five scores is colloquially known as the **cross val score**.
+
+The cross val score is more conservative than your test score, because it's an average of five test scores.
+
+```{python}
+scores = np.array([score_1,score_2,score_3,score_4,score_5])
+```
+
+```{python}
+scores
+```
+
+```{python}
+scores.mean()
+```
+
+Or you can use the `cross_val_score` function from `sklearn`.
+
+```{python}
+scores = cross_val_score(lr,X_train,y_train,cv = 5)
+```
+
+```{python}
+scores.mean()
+```
+
+## Putting it all together
+---
+
+In order to evaluate your model, you'll want three scores:
+- Train
+- Test
+- Cross Val
+
+If Test and Cross Val are similar, then you have representative test set. If they diverge, then you probably have a large sampling error.
+
+```{python}
+# Train/Test Split
+X_train,X_test,y_train,y_test = train_test_split(X,y,random_state=42)
+```
+
+```{python}
+# Instantiate/Fit Model
+lr = LinearRegression()
+lr.fit(X_train,y_train)
+```
+
+```{python}
+# Train Score
+lr.score(X_train,y_train)
+```
+
+```{python}
+# Test Score
+lr.score(X_test,y_test)
+```
+
+```{python}
+# Cross Val Score
+cross_val_score(lr,X_train,y_train,cv = 5).mean()
+```
+
+<a id='additional-resources'></a>
+
+## Additional Resources
+
+---
+
+- [Cross-Validation Example](http://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#example-exercises-plot-cv-diabetes-py).
+- Review this [academic paper](http://frostiebek.free.fr/docs/Machine%20Learning/validation-1.pdf) on the underpinnings of the hold-out method, LOOCV, and k-folds.
+- Review the scikit-learn [documentation](http://scikit-learn.org/stable/modules/cross_validation.html#cross-validation) on cross-validation.
+- Review this [Stanford lesson](https://www.youtube.com/watch?v=_2ij6eaaSl0) on cross-validation.
+- Review this [blog post](http://www.win-vector.com/blog/2015/01/random-testtrain-split-is-not-always-enough/) on why TTS is not always sufficient.
+- Review this Stack Exchange [discussion](http://stackoverflow.com/questions/13610074/is-there-a-rule-of-thumb-for-how-to-divide-a-dataset-into-training-and-validatio) on approximate TTS and validation set sizes.
+
+```{python}
+
+```

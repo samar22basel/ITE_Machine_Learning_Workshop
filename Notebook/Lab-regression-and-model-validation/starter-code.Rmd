@@ -1,0 +1,135 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+# Lab 3_01: Statistical Modeling and Model Validation
+
+> Authors: Tim Book, Matt Brems
+
+---
+
+
+## Objective
+The goal of this lab is to guide you through the modeling workflow to produce the best model you can. In this lesson, you will follow all best practices when slicing your data and validating your model. 
+
+
+## Imports
+
+```{python}
+# Import everything you need here.
+# You may want to return to this cell to import more things later in the lab.
+# DO NOT COPY AND PASTE FROM OUR CLASS SLIDES!
+# Muscle memory is important!
+
+
+```
+
+## Read Data
+The `citibike` dataset consists of Citi Bike ridership data for over 224,000 rides in February 2014.
+
+```{python}
+# Read in the citibike data in the data folder in this repository.
+
+```
+
+## Explore the data
+Use this space to familiarize yourself with the data.
+
+Convince yourself there are no issues with the data. If you find any issues, clean them here.
+
+```{python}
+
+```
+
+## Is average trip duration different by gender?
+
+Conduct a hypothesis test that checks whether or not the average trip duration is different for `gender=1` and `gender=2`. Be sure to specify your null and alternative hypotheses, and to state your conclusion carefully and correctly!
+
+```{python}
+
+```
+
+## What numeric columns shouldn't be treated as numeric?
+
+
+**Answer:**
+
+
+## Dummify the `start station id` Variable
+
+```{python}
+
+```
+
+## Engineer a feature called `age` that shares how old the person would have been in 2014 (at the time the data was collected).
+
+- Note: you will need to clean the data a bit.
+
+```{python}
+
+```
+
+## Split your data into train/test data
+
+Look at the size of your data. What is a good proportion for your split? **Justify your answer.**
+
+Use the `tripduration` column as your `y` variable.
+
+For your `X` variables, use `age`, `usertype`, `gender`, and the dummy variables you created from `start station id`. (Hint: You may find the Pandas `.drop()` method helpful here.)
+
+**NOTE:** When doing your train/test split, please use random seed 123.
+
+```{python}
+
+```
+
+## Fit a Linear Regression model in `sklearn` predicting `tripduration`.
+
+```{python}
+
+```
+
+## Evaluate your model
+Look at some evaluation metrics for **both** the training and test data. 
+- How did your model do? Is it overfit, underfit, or neither?
+- Does this model outperform the baseline? (e.g. setting $\hat{y}$ to be the mean of our training `y` values.)
+
+```{python}
+
+```
+
+## Fit a Linear Regression model in `statsmodels` predicting `tripduration`.
+
+```{python}
+
+```
+
+## Using the `statsmodels` summary, test whether or not `age` has a significant effect when predicting `tripduration`.
+- Be sure to specify your null and alternative hypotheses, and to state your conclusion carefully and correctly **in the context of your model**!
+
+```{python}
+
+```
+
+## Citi Bike is attempting to market to people who they think will ride their bike for a long time. Based on your modeling, what types of individuals should Citi Bike market toward?
+
+```{python}
+
+```
