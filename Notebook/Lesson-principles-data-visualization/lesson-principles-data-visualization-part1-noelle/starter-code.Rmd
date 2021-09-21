@@ -59,12 +59,15 @@ Today, we will focus on **explanatory analysis**. Many of these tools will be tr
 ```{python}
 # Importing NumPy and Pandas.
 
-
+import numpy as np
+import pandas as pd 
 # Importing matplotlib.pyplot - the specific plotting API 
 # https://matplotlib.org/api/pyplot_api.html
+import matplotlib.pyplot as plt
 
 
 # Import Seaborn.
+import seaborn as sns
 
 ```
 
@@ -76,25 +79,25 @@ Today, we will focus on **explanatory analysis**. Many of these tools will be tr
 ```{python}
 # Bring in stock data.
 
-
+stocks = pd.read_csv('data/stocks_data.csv')
 # Convert stock date to datetime.
-
+stocks['date'] = pd.to_datetime(stocks['date'])
 ```
 
 ```{python}
 # Check out the first five rows of the stocks data.
-
+stocks.head()
 
 ```
 
 ```{python}
 # Display the different weekdays and how frequently we observe each of them.
-
+stocks['weekday'].value_counts()
 ```
 
 ```{python}
 # Display the different stock tickers and how frequently we observe each of them.
-
+stocks['ticker'].value_counts()
 ```
 
 ## Pros and Cons of Visuals
@@ -135,9 +138,17 @@ I'm not a visual designer. Instead, I like things that are rule-oriented. I want
 
 ```{python}
 # save AAPL Closing Stock Price on August 19, 2004 as variables
-
+aapl_close_2004 = stocks[(stocks['date'] == '2004-08-19') & (stocks['ticker'] == 'AAPL')]['close']
 # save GOOG Closing Stock Price on August 19, 2004 as variables
+goog_close_2004 = stocks[(stocks['date'] == '2004-08-19') & (stocks['ticker'] == 'GOOG')]['close']
+```
 
+```{python}
+aapl_close_2004
+```
+
+```{python}
+goog_close_2004
 ```
 
 ```{python}
@@ -147,9 +158,10 @@ plt.figure(figsize = (8, 5))
 # Create a bar chart.
 # plt.bar() will create a vertical bar chart.
 
-
+plt.bar(['AAPL','GOOG'],
+           [aapl_close_2004[1666], goog_close_2004[7852]])
 # Add a title and show the plot.
-
+plt.title('Apple vs Google closing price')
 ```
 
 **If you are reporting one or two numbers**, then:
@@ -170,27 +182,32 @@ In the book *Storytelling with Data*, the author talks about utilizing color and
 ```{python}
 # find the maximum closing price
 
+max_nke = stocks[stocks['ticker']== 'NKE']['close'].max()
 ```
 
 ```{python}
 # maximum closing price
-
+max_goog = stocks[stocks['ticker']== 'GOOG']['close'].max()
 ```
 
 ```{python}
 # maximum closing price
-
+max_sbux = stocks[stocks['ticker']== 'SBUX']['close'].max()
 ```
 
 ```{python}
 # maximum closing price
-
+max_yhoo = stocks[stocks['ticker']== 'YHOO']['close'].max()
 ```
 
 ```{python}
 # plot it
 
+plt.bar(['Nike','Google','Starbucks','Yahoo'],
+           [max_nke,max_goog,max_sbux,max_yhoo])
 
+
+plt.title('Maximum Closing Stck Price')
 ```
 
 <details><summary>What are some things we can add to make this visualization better?</summary>
@@ -201,7 +218,14 @@ In the book *Storytelling with Data*, the author talks about utilizing color and
 </details>
 
 ```{python}
+# plot it
 
+plt.bar(['Nike','Google','Starbucks','Yahoo'],
+           [max_nke,max_goog,max_sbux,max_yhoo],
+               color =['orange','yellow','blue','pink'])
+
+
+plt.title('Maximum Closing Stck Price')
 ```
 
 <details><summary>What do you want your stakeholders to see in this visualization?</summary>
@@ -252,7 +276,7 @@ We can also use text to tell the audience what we want them to learn from our vi
 **Example 3**: Suppose we wanted to visualize the distribution of stock tickers. (That is, how many values did we observe for each ticker?)
 
 ```{python}
-
+stocks['ticker'].value_counts()
 ```
 
 ```{python}
@@ -285,20 +309,22 @@ plt.title('Number of Closing Stock Prices Stored');
 # plt.barh() will create a horizontal bar chart. (Note the h at the end of bar!)
 # We have to pass in our values and labels again. Luckily, we don't need to swap the order!
 
+plt.barh(['Starbucks', 'Intel Corp.', 'Nike', 'Apple', 'Yahoo', 'Dow', 'Google', 'Nasdaq Inc.'],
+        stocks['ticker'].value_counts())
 
 
-
+plt.title('Number of Closing Stock Prices Stored');
 ```
 
 **Example 6**: Suppose we wanted to visualize the distribution of closing stock prices for `SBUX`. Since this is a quantitative variable, we will use a **histogram**.
 
 ```{python}
 # Return all closing stock prices for SBUX ticker
-
+stocks[stocks['ticker'] == 'SBUX']['close']
 ```
 
 ```{python}
-plt.hist()
+plt.hist(stocks[stocks['ticker'] == 'SBUX']['close'])
 plt.title('Closing Stock Prices for SBUX');
 ```
 
@@ -471,6 +497,7 @@ goog_pct_change =
 
 ```
 
+<img src="./images/type.png" alt="drawing" width="400"/>
 As Einstein said, "Everything should be as simple as it can be, but not simpler." This is pretty simple. If it works... use it!
 - It's not lost in a table.
 - It's very clearly calling out what we want to emphasize.
