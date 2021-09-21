@@ -131,7 +131,7 @@ Let's start by looking at the "head" of your data with the `.head()` built-in fu
 <!-- #endregion -->
 
 ```{python nbpresent={'id': 'f332b800-d5b7-4ee9-8d36-77ecd7c4465c'}, slideshow={'slide_type': 'fragment'}}
-
+ufo.head()
 ```
 
 <!-- #region nbpresent={"id": "1e6c6b41-692a-43fd-b4e6-81ee125dad7e"} slideshow={"slide_type": "slide"} -->
@@ -139,7 +139,7 @@ If we want to see the last part of our data, we can equivalently use the ```.tai
 <!-- #endregion -->
 
 ```{python nbpresent={'id': '0077c2a2-48f2-4c30-9181-34d2fc466bc9'}, slideshow={'slide_type': '-'}}
-
+ufo.tail()
 ```
 
 <!-- #region nbpresent={"id": "2c901f72-6d15-4e6b-9592-de89ff0b4dfa"} slideshow={"slide_type": "slide"} -->
@@ -153,7 +153,7 @@ It's good to look at what the dimensions of your data are. The ```.shape``` prop
 <!-- #endregion -->
 
 ```{python nbpresent={'id': '9a9b6f73-3b89-41e7-99eb-14e7afa83467'}, slideshow={'slide_type': '-'}}
-
+ufo.shape
 ```
 
 `/poll "In terms of rows, is this the largest dataset you've ever worked with?" "Yes" "No" "Not sure, but I'm not impressed anyway" anonymous limit 1`
@@ -163,7 +163,7 @@ You will notice that this is operates the same as `.shape` for numpy arrays/matr
 Look at the names of your columns with the ```.columns``` property.
 
 ```{python nbpresent={'id': 'b2da21bb-5a29-441d-a0b7-949ecf9938c8'}, slideshow={'slide_type': 'fragment'}}
-
+ufo.columns
 ```
 
 <!-- #region nbpresent={"id": "fc25fdf8-5959-4d0e-ab9d-ab6da5c83209"} slideshow={"slide_type": "slide"} -->
@@ -171,7 +171,11 @@ Accessing a specific column is easy. You can use the bracket syntax just like py
 <!-- #endregion -->
 
 ```{python nbpresent={'id': 'c1d9b4d1-263d-4ca1-acf6-d18ad31c16e6'}, slideshow={'slide_type': 'fragment'}}
+ufo['City'].head()
+```
 
+```{python}
+ufo.City.head()
 ```
 
 ```{python}
@@ -188,7 +192,7 @@ You can also access a column (as a DataFrame instead of a Series) or multiple co
 <!-- #endregion -->
 
 ```{python nbpresent={'id': '46dc97d4-6326-417d-8745-64c49ef65ec2'}, slideshow={'slide_type': 'fragment'}}
-
+ufo[['City','State']].head()
 ```
 
 ```{python}
@@ -281,23 +285,35 @@ You can use `.value_counts()` to get a good tabular view of a categorical variab
 
 ```{python nbpresent={'id': '4d3ae9ac-b23b-4c49-9f0a-126c842419e8'}, slideshow={'slide_type': 'fragment'}}
 # Let's read in the diamonds data set.
+
+diamonds = pd.read_csv("datasets/diamonds.csv")
+```
+
+```{python}
+diamonds.head()
 ```
 
 ```{python}
 # Let's describe the price
+
+diamonds['price'].describe()
 ```
 
 ```{python nbpresent={'id': '59ba0259-fb6c-4bd1-b274-2035540493be'}}
 # We can even do it to the whole DataFrame - what does that look like?
 # What's missing?
+diamonds.describe()
 ```
 
 ```{python}
 # Let's count up the cuts
+
+diamonds['cut'].value_counts()
 ```
 
 ```{python}
 # Let's do the same thing, but normalized
+diamonds['cut'].value_counts(normalize=True)
 ```
 
 <!-- #region nbpresent={"id": "969967d8-7094-4960-8c4b-5583fed79648"} slideshow={"slide_type": "slide"} -->
@@ -320,11 +336,11 @@ I can use the `.mean()` function on the `ufo` DataFrame to get the mean for ever
 <!-- #endregion -->
 
 ```{python nbpresent={'id': 'adde643c-6657-4d32-bf3d-4406a9ae3303'}}
-
+diamonds['price'].median()
 ```
 
 ```{python}
-
+diamonds['price'].mean()
 ```
 
 ```{python}
@@ -349,7 +365,11 @@ Now that we know a little bit about basic DataFrame use, let's practice on a new
 <!-- #endregion -->
 
 ```{python slideshow={'slide_type': 'fragment'}}
+cars = pd.read_csv('datasets/cars.csv')
+```
 
+```{python}
+cars.head()
 ```
 
 ## Filtering
@@ -393,6 +413,12 @@ Filtering in pandas uses vectors of booleans to describe inclusion or exclusion.
 ```{python}
 # This functions identically to the code above, and can sometimes feels a little cleaner.
 # Variables that serve this function are sometimes called "masks"
+
+high_mpg = cars['mpg']>30
+```
+
+```{python}
+cars[high_mpg]
 ```
 
 ### Multiple Filters
@@ -401,10 +427,13 @@ Often we want to filter based on multiple conditions. We can use the usual "and"
 ```{python}
 # "And" logic - use ampersand (&)
 # Note parentheses mandatory!
+
+cars[(cars['cyl'] ==4) & (cars['am']==1)]
 ```
 
 ```{python}
 # "Or" logic - use pipe (|)
+cars[(cars['cyl'] ==4) | (cars['am']==1)]
 ```
 
 ### Now you:
@@ -460,15 +489,15 @@ data.loc[rows, columns]
 Where `rows` is often a filter (ie, a **mask**), and `columns` is a list of columns, or even just `:` to select all columns.
 
 ```{python}
-
+ufo.head()
 ```
 
 ```{python}
-
+ufo.loc[ufo['State']=='TX',['City','Shape Reported']].head()
 ```
 
 ```{python nbpresent={'id': '4162fb31-3624-4996-b1ec-a7a7eb23c5e5'}, slideshow={'slide_type': '-'}}
-
+ufo.loc[ufo['State']=='TX',:].head()
 ```
 
 ### Acccctually.....
@@ -481,15 +510,15 @@ The `i` stands for "integer" and will give you the actual zero-indexed numerical
 <!-- #endregion -->
 
 ```{python nbpresent={'id': 'a59893a2-95e8-41cc-b5d9-e0a1fe0800d8'}}
-
+ufo.head()
 ```
 
 ```{python nbpresent={'id': 'dc4ccdda-2932-48c7-a7d7-1f1b1f30826c'}}
-
+ufo.iloc[:3,:]
 ```
 
 ```{python}
-
+ufo.iloc[:3,1:3]
 ```
 
 ## Sorting
@@ -534,14 +563,18 @@ This might sound complicated, but it's actually only two commands in pandas (the
 
 ```{python}
 # What is the mean price by diamond cut?
+
+diamonds.groupby('cut')['price'].mean()
 ```
 
 ```{python}
 # Can we just describe each price by cut?
+diamonds.groupby('cut')['price'].describe()
 ```
 
 ```{python nbpresent={'id': 'c42d85ec-a9a6-4880-84c5-1b73ace2341b'}}
 # What if I want my own recipe of statistics?
+diamonds.groupby('cut')['price'].agg(['count','mean','median'])
 ```
 
 ### Now You:
@@ -564,32 +597,33 @@ def log_mean(p):
 diamonds.groupby('cut')['price'].agg(['count', 'mean', log_mean])
 ```
 
-```{python}
-# What if I want functions of different columns?
-diamonds.groupby('cut').agg({
-    'price': {'count': 'count', 'price_mean': 'mean'},
-    'carat': {'carat_mean': 'mean'}
-})
-```
-
 ## Adding, Dropping, Renaming, and `inplace` Methods
 
 ```{python}
 # Adding a column is easy, just define it!
 # What if I wanted km per gal instead of miles per gal?
+cars['kmpg']=cars['mpg']*1.61
+cars.head(2)
 ```
 
 ```{python}
 # Oops - that actually doesn't make sense since they'd be using liters anyway.
 # Let's drop it.
+
+cars.drop('kmpg',axis = 1).head()
+```
+
+```{python}
+cars.head()
 ```
 
 ```{python}
 # But... it's not gone?
+cars.drop('kmpg',axis = 1,inplace=True)
 ```
 
 ```{python}
-
+cars.head()
 ```
 
 ###  Inplace Methods!
@@ -618,7 +652,13 @@ ufo.head()
 ```
 
 ```{python}
+ufo.rename(columns = {
+    'Colors Reported':'colors'
+}, inplace=True)
+```
 
+```{python}
+ufo.head()
 ```
 
 ### Aside: `str` and `dt` methods

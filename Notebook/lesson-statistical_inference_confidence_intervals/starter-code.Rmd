@@ -74,6 +74,8 @@ population = np.random.binomial(n=1,
 
 ```{python}
 # What is the percentage of our pop'n that think the country is headed in the right direction?
+
+population[:10]
 ```
 
 Above, we simulated a population of people where **38.7%** of them think the country is headed in the right direction. 
@@ -83,27 +85,43 @@ Above, we simulated a population of people where **38.7%** of them think the cou
 The problem is, you don't have enough money and time to call all 1,000 of them. You can only call 50.
 
 ```{python}
-sample =
+sample = np.random.choice(population,
+                         size = 50,
+                         replace = False)
 ```
 
 ```{python}
-
+np.mean(sample)
 ```
 
 ```{python}
-
+sample_2 = np.random.choice(population,
+                         size = 50,
+                         replace = False)
 ```
 
 ```{python}
-
+np.mean(sample_2)
 ```
 
 ```{python}
-
+sample_3 = np.random.choice(population,
+                         size = 50,
+                         replace = False)
 ```
 
 ```{python}
+np.mean(sample_3)
+```
 
+```{python}
+sample_4 = np.random.choice(population,
+                         size = 50,
+                         replace = False)
+```
+
+```{python}
+np.mean(sample_4)
 ```
 
 #### Even if we randomly sample, we aren't guaranteed to get a good sample!
@@ -198,24 +216,24 @@ $$
 $$
 
 ```{python}
-sample_mean =
-sigma =
-n =
+sample_mean = np.mean(sample)
+sigma = np.std(sample)
+n = len(sample)
+```
+
+```{python}
+sample_mean - 1.96 *sigma/(n ** 0.5)
+```
+
+```{python}
+sample_mean + 1.96 *sigma/(n ** 0.5)
 ```
 
 ```{python}
 
 ```
 
-```{python}
-
-```
-
-```{python}
-
-```
-
-Our 95% confidence interval for the percentage of people who think our country is on the right track is **(24.55%, 51.45%)**.
+Our 95% confidence interval for the percentage of people who think our country is on the right track is **(46.42%, 73.57%)**.
 
 #### Interpretation (*this will come up in interviews*)
 
