@@ -1,0 +1,569 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+# Predicting Left-Handedness from Psychological Factors
+> Author: Mahesh
+
+We can sketch out the data science process as follows:
+1. Define the problem.
+2. Obtain the data.
+3. Explore the data.
+4. Model the data.
+5. Evaluate the model.
+6. Answer the problem.
+
+We'll walk through a full data science problem in this lab. 
+
+
+---
+## Step 1: Define The Problem.
+
+You're currently a data scientist working at a university. A professor of psychology is attempting to study the relationship between personalities and left-handedness. They have tasked you with gathering evidence so that they may publish.
+
+Specifically, the professor says "I need to prove that left-handedness is caused by some personality trait. Go find that personality trait and the data to back it up."
+
+As a data scientist, you know that any real data science problem must be **specific** and **conclusively answerable**. For example:
+- Bad data science problem: "What is the link between obesity and blood pressure?"
+    - This is vague and is not conclusively answerable. That is, two people might look at the conclusion and one may say "Sure, the problem has been answered!" and the other may say "The problem has not yet been answered."
+- Good data science problem: "Does an association exist between obesity and blood pressure?"
+    - This is more specific and is conclusively answerable. The problem specifically is asking for a "Yes" or "No" answer. Based on that, two independent people should both be able to say either "Yes, the problem has been answered" or "No, the problem has not yet been answered."
+- Excellent data science problem: "As obesity increases, how does blood pressure change?"
+    - This is very specific and is conclusively answerable. The problem specifically seeks to understand the effect of one variable on the other.
+
+### 1. In the context of the left-handedness and personality example, what are three specific and conclusively answerable problems that you could answer using data science? 
+
+> You might find it helpful to check out the codebook in the repo for some inspiration.
+
+
+**Answer:** _(Answers may vary.)_
+1. As one's response to `Q1` increases, are people more or less likely to be left-handed?
+2. Does the distribution of handedness vary based one's response to Q1?
+3. Which question (`Q1`-`Q44`) has the highest association with left-handedness?
+
+
+---
+## Step 2: Obtain the data.
+
+### 2. Read in the file titled "data.csv."
+> Hint: Despite being saved as a .csv file, you won't be able to simply `pd.read_csv()` this data!
+
+```{python}
+import pandas as pd
+```
+
+```{python}
+df = pd.read_table("../data.csv")
+```
+
+```{python}
+df.head()
+```
+
+### 3. Suppose that, instead of us giving you this data in a file, you were actually conducting a survey to gather this data yourself. From an ethics/privacy point of view, what are three things you might consider when attempting to gather this data?
+> When working with sensitive data like sexual orientation or gender identity, we need to consider how this data could be used if it fell into the wrong hands!
+
+
+**Answer:** _(Answers may vary.)_
+
+1. We should question whether or not we need to gather the sexual orientation/gender identity data. If it is **necessary** for what we want to study, then we need to be smart about including it. If it not necessary, then **we should not be gathering this data!**
+2. If the survey is not optional already, make it optional. If we're only including surveys that are complete, we should allow for people to complete only certain questions instead of making all questions required.
+3. We should collect this data anonymously, *not* confidentially.
+    - Anonymously means we do not collect personally identifiable information (PII).
+    - Confidential means we collect PII but we don't make that available to others.
+    - If we have access to names or social security numbers, it means that someone could hack us and connect names/SSNs with gender, orientation, etc. Instead, we should collect the data without names or anything so that even if our data are hacked, it is much harder to connect responses with an individual.
+4. From the perspective of inclusivity, we want to make sure our responses fit everyone trying to respond. For example, for the `gender` category, we should **at minimum** have a male, female, and other category. However, we might consider including options for transgender individuals, having only a fill-in-the-blank response instead of explicit choices, and/or having "prefer to not answer" category.
+5. For a particularly advanced option, there's an area of study called [differential privacy](https://en.wikipedia.org/wiki/Differential_privacy) that allows us to study population-level effects without exposing any individual. Consider the following example:
+    - Have each respondent flip a coin.
+    - If the respondent flips heads, have them answer the "gender" question honestly.
+    - If the respondent flips tails, have them answer the "gender" question with "transgender."
+        - This way, an individual who answers "transgender" may or may not actually be transgender. Someone who hacks the data would never be able to know who truly identifies as transgender versus who identifies as transgender based on the coin flip. However, because we know approximately how many coin flips should be heads versus tails, we can estimate the percentage of individuals who are transgender. This allows us to study what we want to study but also allows us to maintain privacy for individuals!
+
+
+---
+## Step 3: Explore the data.
+
+### 4. Conduct exploratory data analysis on this dataset.
+> If you haven't already, be sure to check out the codebook in the repo, as that will help in your EDA process.
+
+```{python}
+df.columns
+```
+
+```{python}
+df.describe(include = 'all')
+```
+
+The `include = 'all'` option will summarize quantitative and qualitative variables. We don't have qualitative variables here, but I usually err on the side of including all columns just in case.
+
+```{python}
+df.isnull().sum()
+```
+
+No missing data!
+
+```{python}
+import seaborn as sns
+
+# %matplotlib inline
+```
+
+```{python}
+# sns.pairplot(df.drop(columns=['introelapse', 'testelapse', 'country',
+#                       'fromgoogle', 'engnat', 'age', 'education',
+#                       'gender', 'orientation', 'race', 'religion',
+#                       'hand'], axis = 1));
+```
+
+If we ran this `pairplot` above, it would be exceedingly unhelpful and take a very long time. It would make sense for us to look at a smaller group of variables at a time or to perhaps compare each `Q1` through `Q44` with `y` directly.
+> If you want to see it, you can uncomment the cell and run it... but it will take a very long time!
+
+
+---
+## Step 4: Model the data.
+
+### 5. Suppose I wanted to use Q1 - Q44 to predict whether or not the person is left-handed. Would this be a classification or regression problem? Why?
+
+
+**Answer:** This would be a classification problem. The output (whether or not the person is left-handed) is discrete.
+
+
+### 6. We want to use $k$-nearest neighbors to predict whether or not a person is left-handed based on their responses to Q1 - Q44. Before doing that, however, you remember that it is often a good idea to standardize your variables. In general, why would we standardize our variables? Give an example of when we would standardize our variables.
+
+
+**Answer:** When we want to put our variables on the same scale, we often will standardize them. An explicit example might be predicting income based on GPA and square footage of one's house. If we built a linear regression model predicting income from GPA and square feet, the coefficient from GPA would probably be quite large (because a one-unit change in GPA is substantial) whereas the coefficient from square feet would probably be quite small (because a one-unit change in square feet is almost negligible). If we plan to regularize, the GPA coefficient will be penalized just because it's large whereas the square feet coefficient will probably not be affected much at all.
+
+In the context of $k$-nearest neighbors, it's especially important to standardize our variables. If we're trying to see which observations are "close" to one another and we have two variables that are on very different scales, then one variable will make observations look close to one another. For example, observations will look close based on GPA but far away based on square footage. The nearest neighbors will be almost entirely determined by square footage and not by GPA.
+
+
+### 7. Give an example of when we might not standardize our variables.
+
+
+**Answer:** If our variables are already on the same scale, it doesn't make sense to standardize them. If we want to interpret our variables on their original scale, standardizing will make that interpretation more difficult.
+
+
+### 8. Based on your answers to 7 and 8, do you think we should standardize our predictor variables in this case? Why or why not?
+
+
+**Answer:** If we're only using `Q1`-`Q44` as predictors, I would probably not standardize our predictor variables. They're already on the same scale (1 to 5) and I might want the interpretability of a one-unit increase in the response to an individual question.
+
+
+### 9. We want to use $k$-nearest neighbors to predict whether or not a person is left-handed. What munging/cleaning do we need to do to our $y$ variable in order to explicitly answer this question? Do it.
+
+
+**Answer:** We want to predict whether or not a person is left-handed. Looking at `df['hand'].value_counts()`, we have four categories. Instead, I want to convert everything to 1s and 0s. Specifically, I'll map `2` (left-handed) to be `1` and I'll map everything else (`0`, `1`, `3`) to be `0`.
+
+> Note: Some people may interpret ambidextrous to be included in left-handed. While I did not do that here, there are two points I want to make.
+
+    > 1. This speaks to the importance of how you word your problem statement! Be sure to be as explicit as possible to minimize any confusion among peers.
+    
+    > 2. Because the proportion of people who are ambidextrous is so low, it's unlikely that this will substantially affect our model. (Our proportion of 1s would increase from about 11% to 15%.)
+    
+> I have dropped the 11 "missing" values of `0`. This may be a valid thing to do in this case, because we do not know whether the 0 refers to "left-handed" or "not left-handed" and it may not make sense to include them where our predicted value is missing. However, given that the proportion of `0`s is so low, it's unlikely that this will substantially affect our model.
+
+```{python}
+df['hand'].value_counts()
+```
+
+```{python}
+df['y'] = [1 if i == 2 else 0 for i in df['hand']]
+```
+
+Let's do a sanity check to make sure things worked the way we expected them to work:
+
+```{python}
+df['y'].value_counts()
+```
+
+Now to drop the "missing" values from our dataframe...
+
+```{python}
+df = df[df['hand'] != 0].reset_index()
+```
+
+Another sanity check to make sure things worked as expected:
+
+```{python}
+df
+```
+
+By the difference in the column called `index` and the left-most column, we can pretty easily see that there were 11 observations dropped. This matches up exactly with how many `0`s we had in the `hand` column. Based on this, I'm pretty confident that what I did worked and I feel comfortable moving forward.
+
+
+### 10. The professor for whom you work suggests that you set $k = 4$. Why might this be a bad idea in this specific case?
+
+
+**Answer:** Having an even number of categories may lead us to having ties when predicting a discrete output. For example, maybe two nearest neighbors are right-handed and two nearest neighbors are left-handed. Any prediction in this case would be arbitrary, because it's equally likely (based on the data) for that individual to be left- or right-handed. It is almost always a good option to pick a value for $k$ that is not divisible by the number of categories you seek to predict!
+
+
+### 11. Let's *(finally)* use $k$-nearest neighbors to predict whether or not a person is left-handed!
+
+> Be sure to create a train/test split with your data!
+
+> Create four separate models, one with $k = 3$, one with $k = 5$, one with $k = 15$, and one with $k = 25$.
+
+> Instantiate and fit your models.
+
+
+I'll first create my `X` and `y` dataframes:
+
+```{python}
+X = df.drop(columns=['index', 'introelapse', 'testelapse', 'country',
+       'fromgoogle', 'engnat', 'age', 'education', 'gender', 'orientation',
+       'race', 'religion', 'hand', 'y'], axis = 1)
+
+y = df['y']
+```
+
+```{python}
+from sklearn.model_selection import train_test_split
+```
+
+```{python}
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+```
+
+In the previous cell, I chose to put 75% of my data into my training set and 25% into my testing set. This was a pretty arbitrary choice and you could have selected something different. Before version 0.21, the default `test_size` is 0.25; this will change in version 0.21.
+> Based on the lectures we had later in the week (unbalanced classes), it's advisable for us to stratify on our `y` data so that we don't have a surprisingly high or low number of `1` values in our training or testing set. That being said, this lab was assigned before the unbalanced classes lecture so I didn't include it here. If you want to try it, you should add the option `stratify = 'y'` as an argument in your `train_test_split()`.
+
+```{python}
+from sklearn.neighbors import KNeighborsClassifier
+```
+
+```{python}
+k_3 = KNeighborsClassifier(n_neighbors = 3)
+k_3.fit(X_train, y_train)
+
+k_5 = KNeighborsClassifier(n_neighbors = 5)
+k_5.fit(X_train, y_train)
+
+k_15 = KNeighborsClassifier(n_neighbors = 15)
+k_15.fit(X_train, y_train)
+
+k_25 = KNeighborsClassifier(n_neighbors = 25)
+k_25.fit(X_train, y_train)
+```
+
+Being good data scientists, we know that we might not run just one type of model. We might run many different models and see which is best.
+
+### 12. We want to use logistic regression to predict whether or not a person is left-handed. Before we do that, let's check the [documentation for logistic regression in sklearn](http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html). Is there default regularization? If so, what is it? If not, how do you know?
+
+
+**Answer:** Surprisingly, there is default regularization! 
+- `penalty = 'l2'` indicates the L2 or Ridge penalty.
+- `C = 1.0` indicates that the inverse of our regularization strength is 1. Note that $C = \frac{1}{\alpha} \Rightarrow 1 = \frac{1}{\alpha} \Rightarrow \alpha = 1$.
+
+Our loss function would then include add $\alpha\sum_{i=1}^p \hat{\beta}_i^2$ as a penalty, where $\alpha = 1$.
+
+
+### 13. We want to use logistic regression to predict whether or not a person is left-handed. Before we do that, should we standardize our features?
+
+
+**Answer:**
+- In general, yes. Because `sklearn` will regularize by default and because we need to standardize our predictors before regularization, we should usually regularize our predictors before fitting an `sklearn` logistic regression model.
+- Here, though, since my independent variables are already on the same scale, so we don't _have_ to standardize.
+
+> Note: Our rationale for standardizing is similar to above!
+
+<!-- #region -->
+### 14. Let's use logistic regression to predict whether or not the person is left-handed.
+
+
+> Be sure to use the same train/test split with your data as with your $k$NN model above!
+
+> Create four separate models, one with LASSO and $\alpha = 1$, one with LASSO and $\alpha = 10$, one with Ridge and $\alpha = 1$, and one with Ridge and $\alpha = 10$. *(Hint: Be careful with how you specify $\alpha$ in your model!)*
+
+> Instantiate and fit your models.
+<!-- #endregion -->
+
+```{python}
+from sklearn.linear_model import LogisticRegression
+```
+
+```{python}
+lasso_1 = LogisticRegression(penalty = 'l1', C = 1.0, solver = 'liblinear')
+lasso_1.fit(X_train, y_train)
+
+lasso_10 = LogisticRegression(penalty = 'l1', C = 0.1, solver = 'liblinear')
+lasso_10.fit(X_train, y_train)
+
+ridge_1 = LogisticRegression(penalty = 'l2', C = 1.0, solver = 'liblinear')
+ridge_1.fit(X_train, y_train)
+
+ridge_10 = LogisticRegression(penalty = 'l2', C = 0.1, solver = 'liblinear')
+ridge_10.fit(X_train, y_train)
+```
+
+---
+## Step 5: Evaluate the model(s).
+
+### 15. Before calculating any score on your data, take a step back. Think about your $X$ variable and your $Y$ variable. Do you think your $X$ variables will do a good job of predicting your $Y$ variable? Why or why not?¶
+
+
+Answer: No, I do not. We are predicting whether or not someone is left-handed based on a series of psychological factors. Psychological factors are probably not very likely to predict the hand with which someone writes.
+
+
+### 16. Using accuracy as your metric, evaluate all eight of your models on both the training and testing sets. Put your scores below. (If you want to be fancy and generate a table in Markdown, there's a [Markdown table generator site linked here](https://www.tablesgenerator.com/markdown_tables#).)
+- Note: Your answers here might look a little weird. You didn't do anything wrong; that's to be expected!
+
+```{python}
+print("k-nearest neighbors training accuracy with k = 3: " + str(k_3.score(X_train, y_train)))
+print("k-nearest neighbors testing accuracy with k = 3: " + str(k_3.score(X_test, y_test)))
+
+print("k-nearest neighbors training accuracy with k = 5: " + str(k_5.score(X_train, y_train)))
+print("k-nearest neighbors testing accuracy with k = 5: " + str(k_5.score(X_test, y_test)))
+
+print("k-nearest neighbors training accuracy with k = 15: " + str(k_15.score(X_train, y_train)))
+print("k-nearest neighbors testing accuracy with k = 15: " + str(k_15.score(X_test, y_test)))
+
+print("k-nearest neighbors training accuracy with k = 25: " + str(k_25.score(X_train, y_train)))
+print("k-nearest neighbors testing accuracy with k = 25: " + str(k_25.score(X_test, y_test)))
+
+print("logistic regression training accuracy with LASSO penalty, alpha = 1: " + str(lasso_1.score(X_train, y_train)))
+print("logistic regression testing accuracy with LASSO penalty, alpha = 1: " + str(lasso_1.score(X_test, y_test)))
+
+print("logistic regression training accuracy with LASSO penalty, alpha = 10: " + str(lasso_10.score(X_train, y_train)))
+print("logistic regression testing accuracy with LASSO penalty, alpha = 10: " + str(lasso_10.score(X_test, y_test)))
+
+print("logistic regression training accuracy with Ridge penalty, alpha = 1: " + str(ridge_1.score(X_train, y_train)))
+print("logistic regression testing accuracy with Ridge penalty, alpha = 1: " + str(ridge_1.score(X_test, y_test)))
+
+print("logistic regression training accuracy with Ridge penalty, alpha = 10: " + str(ridge_10.score(X_train, y_train)))
+print("logistic regression testing accuracy with Ridge penalty, alpha = 10: " + str(ridge_10.score(X_test, y_test)))
+```
+
+**Answer:**
+
+|        Model        |    Value of $k$   | Penalty |   Value of $\alpha$   | Training Accuracy | Testing Accuracy |
+|:-------------------:|:--------------:|:-------:|:----------:|:-----------------:|:----------------:|
+|         $k$-nn         |  $k = 3$ |    NA   |     NA     |       0.9057      |      0.8573      |
+|         $k$-nn         |  $k = 5$ |    NA   |     NA     |       0.8910      |      0.8812      |
+|         $k$-nn         | $k = 15$ |    NA   |     NA     |       0.8907      |      0.8937      |
+|         $k$-nn         | $k = 25$ |    NA   |     NA     |       0.8910      |      0.8937      |
+| logistic regression |   NA   |  LASSO  |  $\alpha = 1$ |       0.8913      |      0.8937      |
+| logistic regression |   NA   |  LASSO  | $\alpha = 10$ |       0.8913      |      0.8937      |
+| logistic regression |   NA   |  Ridge  |  $\alpha = 1$ |       0.8913      |      0.8937      |
+| logistic regression |   NA   |  Ridge  | $\alpha = 10$ |       0.8913      |      0.8937      |
+
+
+### 17. In which of your $k$-NN models is there evidence of overfitting? How do you know?
+
+
+**Answer:** Remember that we overfit when our model is too closely matched to the training data and thus generalizes poorly to (held-out) testing data. Evidence of this is when our training score is better than our testing score. In this case, we see that our training score is better than our testing score when $k = 3$ and $k = 5$.
+
+
+### 18. Broadly speaking, how does the value of $k$ in $k$-NN affect the bias-variance tradeoff? (i.e. As $k$ increases, how are bias and variance affected?)
+
+
+**Answer:**
+- As $k$ increases, our bias increases and our variance decreases.
+- As $k$ decreases, our bias decreases and our variance increases.
+
+> A visualization you may find helpful can be found [here](http://scott.fortmann-roe.com/docs/BiasVariance.html).
+
+
+### 19. If you have a $k$-NN model that has evidence of overfitting, what are three things you might try to do to combat overfitting?
+
+
+**Answer:** _(Answers will vary.)_
+1. We can increase $k$ in order to decrease variance.
+2. We can pick a less flexible model than $k$-nearest neighbors. One example of that would be logistic regression. (Logistic regression makes more simplifying assumptions than $k$-nearest neighbors - for example, linear relationship between X and logit of Y.)
+3. We can reduce the number of questions we include as predictors. (For example, maybe some of our questions are correlated with one another, which adds unnecessary complexity to our model.)
+
+
+### 20. In which of your logistic regression models is there evidence of overfitting? How do you know?
+
+
+**Answer:** All of our logistic regression models have identical training scores and identical testing scores. There is no evidence of overfitting from these models, because our training scores are worse than our testing scores.
+
+> While initially surprising, this logically makes sense. It is very unlikely that psychological factors predict left-handedness. Thus, our coefficients are already quite small. Regularization is likely to have little effect on the coefficients.
+
+
+### 21. Broadly speaking, how does the value of $C$ in logistic regression affect the bias-variance tradeoff? (i.e. As $C$ increases, how are bias and variance affected?)
+
+
+**Answer:**
+- As $C$ increases, we regularize less. If we regularize less, then our variance increases and our bias decreases.
+- As $C$ decreases, we regularize more. If we regularize more, then our variance decreases and our bias increases.
+
+
+### 22. For your logistic regression models, play around with the regularization hyperparameter, $C$. As you vary $C$, what happens to the fit and coefficients in the model? What might this mean in the context of this problem?¶
+
+
+Answer: As we saw above, by changing the hyperparameter $C$ (or equivalently changing $\alpha$), we are getting the same model. This means that either our regularization has no effect on our model or that our regularization has such a strong effect that even regularizing a little bit would basically push our coefficients to zero.
+
+In this case, we mentioned above that our $X$ variables probably aren't very valuable in trying to predict $Y$. Because of this, it is not surprising that even a little bit of regularization (i.e. $\alpha = 1$) has a really substantial effect on the fit of our models. The fact that regularizing will give you the same answer provides more support to the claim that our $X$ variables are relatively worthless when trying to predict left-handedness.
+
+
+### 23. If you have a logistic regression model that has evidence of overfitting, what are three things you might try to do to combat overfitting?
+
+
+**Answer:** _(Answers will vary.)_
+1. Manually remove features from my model.
+2. Increase the regularization strength and/or consider using LASSO regularization if not already doing so.
+3. Attempt to gather more data, although this is likely to be an expensive and time-consuming approach to reducing variance.
+
+
+---
+## Step 6: Answer the problem.
+
+### 24. Suppose you want to understand which psychological features are most important in determining left-handedness. Would you rather use $k$-NN or logistic regression? Why?
+
+
+**Answer:** _(Answers will vary.)_
+
+I would prefer to use logistic regression. A logistic regression model would allow us to understand the effect of psychological features on left-handedness. Specifically, we can estimate coefficients that tell us the impact of a one-unit change in psychological factors on whether or not people are left-handed. $k$-nearest neighbors does not provide us with a similar way to understaand how individual features affect left-handedness.
+
+
+### 25. Select your logistic regression model that utilized LASSO regularization with $\alpha = 1$. Interpret the coefficient for `Q1`.
+
+
+**Answer:**
+
+```{python}
+lasso_1.coef_
+```
+
+The coefficient for `Q1` is -0.01104.
+
+```{python}
+import numpy as np
+
+np.exp(lasso_1.coef_[0][0])
+```
+
+We can interpret the coefficient for `Q1` in one of three ways.
+1. As the value for `Q1` increases by 1, the log-odds of being left-handed decreases by 0.01104.
+2. As the value for `Q1` increases by 1, an individual is 98.90% as likely to be left-handed.
+3. As the value for `Q1` increases by 1, an individual is 1.1% less likely to be left-handed.
+
+
+### 26. If you have to select one model overall to be your *best* model, which model would you select? Why?
+- Usually in the "real world," you'll fit many types of models but ultimately need to pick only one! (For example, a client may not understand what it means to have multiple models, or if you're using an algorithm to make a decision, it's probably pretty challenging to use two or more algorithms simultaneously.) It's not always an easy choice, but you'll have to make it soon enough. Pick a model and defend why you picked this model!
+
+
+**Answer:** Of the models I ran, I would either select my $k$-nn model with $k = 5$ or I would select a logistic regression model.
+- My $k$-nn model with $k = 5$ is my $k$-nn model that, based on testing/training accuracy, seems to best balance bias and variance.
+- All of my logistic regression models are performing at the same level, so I could really pick any of them.
+
+**I would probably select my logistic regression model.** Our accuracy is going to be high because we can always just predict "not left-handed" and we'll be right like 90% of the time. If I want to understand what (if any) features predict left-handedness, logistic regression is better for this type of problem than $k$-nearest neighbors. (If I cared about the best predictions instead of understanding how things work, I might be likelier to pick $k$-nn.)
+
+
+### 27. Circle back to the three specific and conclusively answerable questions you came up with in Q1. Answer one of these for the professor based on the model you selected!
+
+
+**Answer:** _(Answers may vary.)_
+
+My questions from the beginning were:
+1. As one's response to `Q1` increases, are people more or less likely to be left-handed?
+2. Does the distribution of handedness vary based one's response to Q1?
+3. Which question (`Q1`-`Q44`) has the highest association with left-handedness?
+
+I select my `ridge_10` model.
+
+---
+#### 1. As one's response to `Q1` increases, are people more or less likely to be left-handed?
+
+**Answer:** As one's answer to `Q1` increases by 1, they are 1.25% less likely to be left-handed.
+
+
+#### 2. Does the distribution of handedness vary based one's response to Q1?
+
+```{python}
+pd.pivot_table(df[['Q1', 'hand', 'religion']], index = 'hand', columns = 'Q1', aggfunc = 'count')
+```
+
+**Answer:** We can see here that `hand = 1` is the most common category across all values of `Q1`.
+
+```{python}
+sns.distplot(df[df['Q1'] == 1]['hand'], kde_kws={'bw': 0.001});
+```
+
+```{python}
+sns.distplot(df[df['Q1'] == 2]['hand'], kde_kws={'bw': 0.001});
+```
+
+```{python}
+sns.distplot(df[df['Q1'] == 3]['hand'], kde_kws={'bw': 0.001});
+```
+
+```{python}
+sns.distplot(df[df['Q1'] == 4]['hand'], kde_kws={'bw': 0.001});
+```
+
+```{python}
+sns.distplot(df[df['Q1'] == 5]['hand'], kde_kws={'bw': 0.001});
+```
+
+The distplots, although kind of difficult to see, seem to tell a similar story. We can do a more explicit test (i.e. the [Kolmogorov-Smirnov test](https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.kstest.html) to compare distributions) but considering:
+- the really minor effect of `Q1` on left-handedness (as Q1 increases by 1, one is 1.25% less likely to be left-handed), 
+- the subject-matter expertise that means it's very unlikely `Q1` affects left-handedness, 
+- and the visual inspection of the table and graphs, 
+
+I'm comfortable concluding that there little to no evidence of a difference in the distribution of handedness for different values of `Q1`.
+
+---
+
+#### 3. Which question (`Q1`-`Q44`) has the highest association with left-handedness?
+
+**Answer:** It makes more sense for us to use [Spearman correlation](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient) instead of the standard [Pearson correlation](https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient) because our $Y$ is binary (left-handed vs. not left-handed).
+
+```{python}
+from scipy.stats import spearmanr
+```
+
+I want to iterate through columns `Q1` through `Q44`.
+
+```{python}
+lst = list(range(1,45))
+
+for i in range(len(lst)):
+    lst[i] = "Q" + str(lst[i])
+```
+
+```{python}
+lst
+```
+
+- I'll instantiate correlation at 0, p_value at 1, and question at Q0.
+- I will iterate through each question column and calculate the Spearman correlation between `y` and that question column.
+- If the p-value is smaller than our current smallest p-value, we edit our correlation, p-value, and question number to refer to the one with the smaller p-value.
+    - This allows us to track, over time, which question has the most significant relationship with `y`.
+- By the end of the list, we will have iterated through each question column and can then identify the question column that was most strongly associated with `y`.
+
+```{python}
+corr = 0
+p_val = 1
+question = 'Q0'
+
+for i in lst:
+    spearman = spearmanr(df[i], df['y'])
+    print(i, spearman)
+    if spearman[1] < p_val:
+        corr = spearman[0]
+        p_val = spearman[1]
+        question = i
+
+print("The question most correlated with left-handedness is " + question + " with correlation of " + str(corr) + " and p_value of " + str(p_val) + ".")
+```
+
+**Answer (cont'd):** Wrapping up, we see that `Q8` has the strongest correlation with left-handedness. The $p$-value is significant at the most common significance levels, but it's also possible that this is just noise. (By testing 44 different questions, it's likely that at least a handful would seem significant just by random chance.)
+
+
+### BONUS:
+Looking for more to do? Probably not - you're busy! But if you want to, consider exploring the following:
+- Create a visual plot comparing training and test metrics for various values of $k$ and various regularization schemes in logistic regression.
+- Rather than just evaluating models based on accuracy, consider using sensitivity, specificity, etc.
+- In the context of predicting left-handedness, why are unbalanced classes concerning? If you were to re-do this process given those concerns, what changes might you make?
+- Fit and evaluate a generalized linear model other than logistic regression (e.g. Poisson regression).
+- Suppose this data were in a SQL database named data and a table named inventory. What SQL query would return the count of people who were right-handed, left-handed, both, or missing with their class labels of 1, 2, 3, and 0, respectively? (You can assume you've already logged into the database.)

@@ -1,0 +1,644 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.10.2
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+<!-- #region -->
+<img src="https://maltem.com/wp-content/uploads/2020/04/LOGO_MALTEM.png" style="float: left; margin: 20px; height: 55px">
+
+<br>
+<br>
+<br>
+<br>
+
+
+# Intro to Decision Trees
+
+_Authors:_ David Yerrington, Matt Brems
+
+<img src="./images/sms1.png" align="left">
+<!-- #endregion -->
+
+### Learning Objectives
+
+- Understand the intuition behind decision trees.
+- Calculate Gini.
+- Describe how decision trees use Gini to make decisions.
+- Fit, generate predictions from, and evaluate decision tree models.
+- Interpret and tune `max_depth`, `min_samples_split`, `min_samples_leaf`, `ccp_alpha`.
+- Visualize a decision tree.
+
+
+## What will we get for dinner?
+
+|$Y = $ Food|$X_1 = $ Weather|$X_2 = $ Day|
+|:---------:|:--------------:|:----------:|
+|   Indian  |      Rainy     |   Weekday  |
+|   Sushi   |      Sunny     |   Weekday  |
+|   Indian  |      Rainy     |   Weekend  |
+|  Mexican  |      Sunny     |   Weekend  |
+|   Indian  |      Rainy     |   Weekday  |
+|  Mexican  |      Sunny     |   Weekend  |
+
+
+<details><summary>It's a rainy day. Based on our past orders, what do you think we'll order?</summary>
+
+- Indian food.
+- In 100% of past cases where the weather is rainy, we've eaten Indian food!
+
+|$Y = $ Food|$X_1 = $ Weather|$X_2 = $ Day|
+|:---------:|:--------------:|:----------:|
+|   Indian  |      Rainy     |   Weekday  |
+|   Indian  |      Rainy     |   Weekend  |
+|   Indian  |      Rainy     |   Weekday  |
+
+</details>
+
+
+<details><summary>It's a sunny day. Based on our past orders, what do you think we'll order?</summary>
+
+- Either Sushi or Mexican food... but we can't say with certainty whether we'd eat sushi or Mexican food.
+- Based on our past orders, we eat sushi on 1/3 of sunny days and we eat Mexican food on 2/3 of sunny days.
+- If I **had** to make a guess here, I'd probably predict Mexican food, but we may want to use additional information to be certain.
+
+|$Y = $ Food|$X_1 = $ Weather|$X_2 = $ Day|
+|:---------:|:--------------:|:----------:|
+|   Sushi   |      Sunny     |   Weekday  |
+|  Mexican  |      Sunny     |   Weekend  |
+|  Mexican  |      Sunny     |   Weekend  |
+
+</details>
+
+
+<details><summary>It's a sunny day that also happens to be a weekend. Based on our past orders, what do you think we'll order?</summary>
+
+- Mexican food.
+- In 100% of past cases where the weather is sunny and where it's a weekend, we've eaten Mexican food!
+
+|$Y = $ Food|$X_1 = $ Weather|$X_2 = $ Day|
+|:---------:|:--------------:|:----------:|
+|  Mexican  |      Sunny     |   Weekend  |
+|  Mexican  |      Sunny     |   Weekend  |
+
+</details>
+
+
+# Decision Trees: Overview
+
+A decision tree:
+- takes a dataset consisting of $X$ and $Y$ data, 
+- finds rules based on our $X$ data that partitions (splits) our data into smaller datasets such that
+- by the bottom of the tree, the values $Y$ in each "leaf node" are as "pure" as possible.
+
+We frequently see decision trees represented by a graph.
+
+<img src="./images/order_food_dt.png" alt="order_food" width="750"/>
+
+- (This image was created using [Draw.io](https://www.draw.io/).)
+
+### Terminology
+Decision trees look like upside down trees. 
+- What we see on top is known as the "root node," through which all of our observations are passed.
+- At each internal split, our dataset is partitioned.
+- A "parent" node is split into two or more "child" nodes.
+- At each of the "leaf nodes" (colored orange), we contain a subset of records that are as pure as possible.
+    - In this food example, each leaf node is perfectly pure. Once we get to a leaf node, every observation in that leaf node has the exact same value of $Y$!
+    - There are ways to quantify the idea of "purity" here so that we can let our computer do most of the tree-building (model-fitting) process... we'll come back to this later.
+
+Decision trees are also called "**Classification and Regression Trees**," sometimes abbreviated "**CART**."
+- [DecisionTreeClassifier Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html)
+- [DecisionTreeRegressor Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html)
+
+
+## 20 Questions
+
+If you aren't familiar with the game [20 Questions](https://en.wikipedia.org/wiki/Twenty_Questions), it's a game with two players (or teams). 
+- Player A thinks of an item but doesn't say what the item is.
+- Player B then attempts to guess what the item is by asking a series of 20 questions with a yes or no answer.
+- If player B correctly guesses the item, then player B wins!
+- If player B does not correctly guess the item, then player A wins!
+
+---
+
+
+
+
+#### Decision trees operate in a fashion that's pretty similar to 20 Questions.
+- Decisions are made in a sequential fashion. Once you know a piece of information, you use that piece of information when asking future questions.
+    - Example: If you know that the item you're trying to guess is a person, then you can use that information to ask better subsequent questions.
+- It's possible to get lucky by making very specific guesses early, but it's pretty unlikely that this is a winning strategy.
+    - Example: If you asked, "Is it an airplane? Is it a boat? Is it a car?" as your first three questions, it's not very likely that you'll win the game.
+
+When fitting a decision tree, we're effectively getting our computer to play a game of 20 Questions. We give the computer some data and it figures out the best $X$ variable to split on at the right time.
+- Above, our "what food should we order?" decision tree first asked what the weather was, **then** asked whether it was a weekday or weekend.
+- If we had asked "is it a weekday or weekend" first, we'd have ended up with a slightly more complicated decision tree.
+
+Just like with all of our models, in order for the computer to learn which $X$ variable to split on and when, the computer needs a loss function to quantify how good a particular split is. This is where the idea of **purity** comes into play.
+
+
+## Purity in Decision Trees
+
+When quantifying how "pure" a node is, we want to see what the distribution of $Y$ is in each node, then summarize this distribution with a number.
+
+<img src="./images/order_food_dt.png" alt="order_food" width="750"/>
+
+- For continuous $Y$ (i.e. using a decision tree to predict income), the default option is mean squared error.
+    - This is the `criterion = 'mse'` argument in `DecisionTreeRegressor`.
+    - When the decision tree is figuring out which split to make at a given node, it picks the split that maximizes the drop in MSE from the parent node to the child node.
+    
+- For discrete $Y$, the default option is the Gini impurity. *(Bonus: This is not quite the same thing as the [Gini coefficient](https://en.wikipedia.org/wiki/Gini_coefficient).)*
+
+---
+
+The **Gini impurity** is the probability a randomly chosen class will be mislabeled if it was randomly labeled.
+
+Suppose $p_i$ is the probability that class $i$ would be chosen uniformly at random. Then:
+
+$$
+\begin{eqnarray*}
+\text{Gini impurity} &=& \sum_{i=1}^{classes} p_i(1 - p_i) \\
+                     &=& 1 - \sum_{i=1}^{classes} p_i^2. \\
+\text{Gini impurity (2 classes)} &=& 1 - p_1^2 - p_2^2. \\
+\text{Gini impurity (3 classes)} &=& 1 - p_1^2 - p_2^2 - p_3^2. \\
+\end{eqnarray*}
+$$
+
+```{python}
+# Define Gini function, called gini. It will calulate the gini and return to host
+def gini(obs):
+    
+    # Create a list to store my squared class probabilities.
+    gini_sum = []
+    
+    # Iterate through each class.
+    for class_i in set(obs):
+        
+        # Calculate observed probability of class i.
+        prob = (obs.count(class_i) / len(obs))
+        
+        # Square the probability and append it to gini_sum.
+        gini_sum.append(prob ** 2)
+        
+    # Return Gini impurity.
+    return 1 - sum(gini_sum)
+```
+
+```{python}
+# Create our y variable from our "where should we eat" dataframe.
+y = ['Indian', 'Sushi', 'Indian', 'Mexican', 'Indian', 'Mexican']
+```
+
+<details><summary>This is a classification problem. How many classes do we have, and what are they?</summary>
+    
+- 3 classes: Indian, Sushi, Mexican.
+</details>
+
+```{python}
+# Check to see if your Gini function is correct on the 
+# "where should we eat" data. (Should get 0.6111.)
+gini(y)
+```
+
+### Gini Practice
+
+$$\text{Gini impurity} = 1 - \sum_{i=1}^{classes} p_i^2$$
+
+
+<details><summary>What is the Gini impurity of a node when every item is from the same class?</summary>
+    
+- Our Gini impurity is zero.
+
+$$
+\begin{eqnarray*}
+\text{Gini impurity} &=& 1 - \sum_{i=1}^{classes} p_i^2 \\
+&=& 1 - p_1^2 \\
+&=& 1 - 1^2 \\
+&=& 1 - 1 \\
+&=& 0
+\end{eqnarray*}
+$$
+</details>
+
+```{python}
+# What is Gini when every item is from the same class?
+gini(['Indian', 'Indian', 'Indian'])
+
+```
+
+<details><summary>What is the Gini impurity of a node when we have two classes, each with two items?</summary>
+    
+- Our Gini impurity is 0.5.
+
+$$
+\begin{eqnarray*}
+\text{Gini impurity} &=& 1 - \sum_{i=1}^{classes} p_i^2 \\
+&=& 1 - p_1^2 - p_2^2 \\
+&=& 1 - \left(\frac{1}{2}\right)^2 - \left(\frac{1}{2}\right)^2 \\
+&=& 1 - \frac{1}{4} - \frac{1}{4} \\
+&=& \frac{1}{2}
+\end{eqnarray*}
+$$
+</details>
+
+```{python}
+# What is Gini when we have two classes, each with two items?
+
+gini(['Indian', 'Indian', 'Mexican', 'Mexican'])
+```
+
+<details><summary>What is the Gini impurity of a node when we have two classes, each with three items?</summary>
+    
+- Our Gini impurity is 0.5.
+
+$$
+\begin{eqnarray*}
+\text{Gini impurity} &=& 1 - \sum_{i=1}^{classes} p_i^2 \\
+&=& 1 - p_1^2 - p_2^2 \\
+&=& 1 - \left(\frac{1}{2}\right)^2 - \left(\frac{1}{2}\right)^2 \\
+&=& 1 - \frac{1}{4} - \frac{1}{4} \\
+&=& \frac{1}{2}
+\end{eqnarray*}
+$$
+</details>
+
+```{python}
+# What is Gini when we have two classes, each with three items?
+gini(['Indian', 'Indian', 'Mexican', 'Mexican', 'Indian', 'Mexican'])
+
+```
+
+<details><summary>What is the Gini impurity of a node when we have three classes, each with two items?</summary>
+    
+- Our Gini impurity is 0.6667.
+
+$$
+\begin{eqnarray*}
+\text{Gini impurity} &=& 1 - \sum_{i=1}^{classes} p_i^2 \\
+&=& 1 - p_1^2 - p_2^2 - p_3^2 \\
+&=& 1 - \left(\frac{1}{3}\right)^2 - \left(\frac{1}{3}\right)^2 - \left(\frac{1}{3}\right)^2 \\
+&=& 1 - \frac{1}{9} - \frac{1}{9} - \frac{1}{9} \\
+&=& 1 - \frac{1}{3} \\
+&=& \frac{2}{3}
+\end{eqnarray*}
+$$
+
+```{python}
+# What is Gini when we have three classes, each with two items?
+
+gini(['Indian', 'Indian', 'Mexican', 'Mexican', 'Sushi', 'Sushi'])
+```
+
+<details><summary>Summary of Gini Impurity Scores</summary>
+
+- A Gini score of 0 means all of our observations are from the same class!
+- In the binary case (with exactly two classes), Gini impurity ranges from 0 to 0.5.
+- If we have three classes, Gini impurity ranges from 0 to 0.66667.
+- If we have $k$ classes, Gini impurity ranges from 0 to $1-\frac{1}{k}$.
+</details>
+
+```{python}
+# Import libraries.
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Set figure size.
+plt.figure(figsize = (12,8))
+
+# Generate x values (for percentage of obs. in class A).
+percent_in_class_A = np.linspace(0, 1, 200)
+percent_in_class_B = 1 - percent_in_class_A
+
+# Calculate Gini values.
+gini_values = 1 - np.square(percent_in_class_A) - np.square(percent_in_class_B)
+
+# Plot line.
+plt.plot(percent_in_class_A,
+         gini_values)
+
+# Establish title, axes, and labels.
+plt.title('Gini Score in Binary Classification', fontsize = 24)
+plt.xlabel('Percent of Observation in Class A', fontsize = 20)
+plt.ylabel('Gini Score', fontsize = 20, rotation = 0, ha = 'right')
+plt.xticks(fontsize = 18)
+plt.yticks(fontsize = 18);
+```
+
+### So how does a decision tree use Gini to decide which variable to split on?
+
+- At any node, consider the subset of our dataframe that exists at that node.
+- Iterate through each variable that could potentially split the data.
+- Calculate the Gini impurity for every possible split.
+- Select the variable that decreases Gini impurity the most from the parent node to the child node.
+
+One consequence of this is that a decision tree is fit using a **greedy** algorithm. Simply put, a decision tree makes the best short-term decision by optimizing at each node individually. _This might mean that our tree isn't optimal (in the number of nodes) in the long run!_
+
+
+## Building a Decision Tree
+
+```{python}
+# Read in Titanic data.
+titanic = pd.read_csv('./datasets/titanic_clean.csv')
+
+# Change sex to int.
+titanic['Sex'] = titanic['Sex'].map({'male': 0,
+                                     'female': 1})
+
+# Create embarked_S column.
+titanic['Embarked_s'] = titanic['Embarked'].map({'S': 1,
+                                                 'C': 0,
+                                                 'Q': 0})
+
+# Create embarked_C column.
+titanic['Embarked_c'] = titanic['Embarked'].map({'S': 0,
+                                                 'C': 1,
+                                                 'Q': 0})
+
+# Conduct train/test split.
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(titanic.drop(['Survived', 'PassengerId', 'Name', 'Embarked'], axis = 1),
+                                                    titanic['Survived'],
+                                                    test_size = 0.3,
+                                                    random_state = 42)
+```
+
+```{python}
+# Check out first five rows of X_train.
+X_train.head()
+```
+
+```{python}
+y_train.head()
+```
+
+```{python}
+# Import model.
+from sklearn.tree import DecisionTreeClassifier
+```
+
+```{python}
+# Instantiate model with random_state = 42.
+dt = DecisionTreeClassifier(random_state = 42)
+```
+
+```{python}
+# Fit model.
+dt.fit(X_train,y_train)
+```
+
+```{python}
+# Evaluate model.
+
+print(f'Score on training set: {dt.score(X_train, y_train)}')
+print(f'Score on testing set: {dt.score(X_test, y_test)}')
+```
+
+<details><summary>What conclusion would you make here?</summary>
+
+- Our model is **very** overfit to the data.
+</details>
+
+
+When fitting a decision tree, your model will always grow until it nearly perfectly predicts every observation!
+- This is like playing a game of 20 questions, but instead calling it "Infinite Questions." You're always going to be able to win!
+
+
+<details><summary>Intuitively, what might you try to do to solve this problem?</summary>
+    
+- As with all models, try to gather more data.
+- As with all models, remove some features.
+- Is there a way for us to stop our model from growing? (Yes!)
+</details>
+
+<!-- #region -->
+### Hyperparameters of Decision Trees
+There are four hyperparameters of decision trees that we may commonly tune in order to prevent overfitting.
+
+- `max_depth`: The maximum depth of the tree.
+    - By default, the nodes are expanded until all leaves are pure (or some other argument limits the growth of the tree).
+    - In the 20 questions analogy, this is like "How many questions we can ask?"
+    
+    
+- `min_samples_split`: The minimum number of samples required to split an internal node.
+    - By default, the minimum number of samples required to split is 2. That is, if there are two or more observations in a node and if we haven't already achieved maximum purity, we can split it!
+    
+    
+- `min_samples_leaf`: The minimum number of samples required to be in a leaf node (a terminal node at the end of the tree).
+    - By default, the minimum number of samples required in a leaf node is 1. (This should ring alarm bells - it's very possible that we'll overfit our model to the data!)
+
+
+- `ccp_alpha`: A [complexity parameter](https://scikit-learn.org/stable/modules/tree.html#minimal-cost-complexity-pruning) similar to $\alpha$ in regularization. As `ccp_alpha` increases, we regularize more.
+    - By default, this value is 0.
+
+[Source: Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html).
+<!-- #endregion -->
+
+```{python}
+# Instantiate model with:
+# - a maximum depth of 5.
+# - at least 7 samples required in order to split an internal node.
+# - at least 3 samples in each leaf node.
+# - a cost complexity of 0.01.
+# - random state of 42.
+
+dt = DecisionTreeClassifier(
+        max_depth = 5,
+        min_samples_split = 7,
+        min_samples_leaf = 3,
+        ccp_alpha = 0.01 
+)
+```
+
+```{python}
+# Fit model.
+dt.fit(X_train,y_train)
+```
+
+```{python}
+# Evaluate model.
+print(f'Score on training set: {dt.score(X_train, y_train)}')
+print(f'Score on testing set: {dt.score(X_test, y_test)}')
+```
+
+#### Let's GridSearch to try to find a better tree.
+
+- Check [2, 3, 5, 7] for `max_depth`.
+- Check [5, 10, 15, 20] for `min_samples_split`.
+- Check [2, 3, 4, 5, 6] for `min_samples_leaf`.
+- Check [0, 0.001, 0.01, 0.1, 1, 10] for `ccp_alpha`.
+- Run 5-fold cross-validation.
+
+
+<details><summary>How many models are being fit here?</summary>
+
+- 4 * 4 * 5 * 6 * 5 = 2400 models.
+</details>
+
+```{python}
+from sklearn.model_selection import GridSearchCV
+```
+
+```{python}
+grid = GridSearchCV( 
+    estimator = DecisionTreeClassifier(),
+    param_grid = { 
+        'max_depth' : [2,3,5,7],
+        'min_samples_split' : [5,10,15,20],
+        'min_samples_leaf' : [2,3,4,5,6],
+        'ccp_alpha' : [0, 0.001, 0.01, 0.1, 1, 10]
+    },
+    cv = 5,
+    verbose = 1
+)
+```
+
+```{python}
+# Let's GridSearch over the above parameters on our training data.
+grid.fit(X_train,y_train)
+```
+
+```{python}
+# What is our best decision tree?
+grid.best_estimator_
+```
+
+```{python}
+grid.best_score_
+```
+
+```{python}
+# What was the cross-validated score of the above decision tree?
+
+```
+
+```{python}
+# Evaluate model.
+print(f'Score on training set: {grid.score(X_train, y_train)}')
+print(f'Score on testing set: {grid.score(X_test, y_test)}')
+```
+
+```{python}
+# Generate predictions on test set.
+preds = grid.predict(X_test)
+```
+
+```{python}
+# Import confusion_matrix.
+from sklearn.metrics import confusion_matrix
+```
+
+```{python}
+# Generate confusion matrix.
+tn, fp, fn, tp = confusion_matrix(y_test,
+                                  preds).ravel()
+
+print(confusion_matrix(y_test,
+                       preds))
+```
+
+```{python}
+print('tn, fp, fn, tp',tn, fp, fn, tp)
+```
+
+```{python}
+# Calculate sensitivity.
+
+sens = tp / (tp + fn)
+
+print(f'Sensitivity: {round(sens, 4)}')
+```
+
+```{python}
+# Calculate specificity.
+
+spec = tn / (tn + fp)
+
+print(f'Specificity: {round(spec, 4)}')
+```
+
+## Visualizing the Output of Decision Trees
+
+One advantage to using a decision tree is that you can easily visualize them in `sklearn`. The two functions used to do this are `plot_tree` and `export_text`.
+- [`plot_tree` documentation](https://scikit-learn.org/stable/modules/generated/sklearn.tree.plot_tree.html#sklearn.tree.plot_tree)
+- [`export_text` documentation](https://scikit-learn.org/stable/modules/generated/sklearn.tree.export_text.html)
+
+```{python}
+# Import plot_tree from sklearn.tree module.
+from sklearn.tree import plot_tree
+
+# Establish size of figure.
+plt.figure(figsize = (50, 30))
+
+# Plot our tree.
+plot_tree(grid.best_estimator_,
+          feature_names = X_train.columns,
+          class_names = ['Dead', 'Survived'],
+          filled = True);
+```
+
+```{python}
+# Import export_text from sklearn.tree module.
+from sklearn.tree import export_text
+
+# Print out tree in plaintext.
+print(export_text(grid.best_estimator_,
+                  list(X_train.columns)))
+```
+
+As with all visualizations, just because we _can_ doesn't mean that we _should_. If our depth is much larger than 2 or 3, the tree may be unreadable.
+
+While these visuals may be helpful to us, it may be helpful to clean it up before presenting it to stakeholders.
+
+<!-- #region -->
+## Why use a decision tree?
+
+
+### 1. We don't have to scale our data.
+The scale of our inputs don't affect decision trees.
+
+### 2. Decision trees don't make assumptions about how our data is distributed.
+Is our data heavily skewed or not normally distributed? Decision trees are nonparametric, meaning we don't make assumptions about how our data or errors are distributed.
+
+### 3. Easy to interpret.
+The output of a decision tree is easy to interpret and thus are relatable to non-technical people. (We'll talk about `feature_importance` later.)
+
+### 4. Speed.
+Decision trees fit very quickly!
+<!-- #endregion -->
+
+<!-- #region -->
+## Why not use a decision tree?
+
+
+### 1. Decision trees can very easily overfit.
+Decision trees often suffer from high error due to variance, so we need to take special care to avoid this. (There are lots of algorithms designed to do exactly this!)
+
+### 2. Decision trees are locally optimal.
+Because we're making the best decision at each node (greedy), we might end up with a worse solution in the long run.
+
+### 3. Decision trees don't work well with unbalanced data.
+We often will bias our results toward the majority class. We need to take steps to avoid this as well! (Check out the `class_weight` parameter if you're interested.)
+<!-- #endregion -->
+
+## Interview Question
+
+
+<details><summary>If you're comparing decision trees and logistic regression, what are the pros and cons of each?</summary>
+    
+(Answers may vary; this is not an exhaustive list!)
+- **Interpretability**: The coefficients in a logistic regression model are interpretable. (They represent the change in log-odds caused by the input variables.) However, this is complicated and not easy for non-technical audiences. Decision trees are interpretable; it is easy to explain to show a picture of a decision tree to a client or boss and get them to understand how predictions are made.
+- **Performance**: Decision trees have a tendency to easily overfit, while logistic regression models usually do not overfit as easily.
+- **Assumptions**: Decision trees have no assumptions about how data are distributed; logistic regression does make assumptions about how data are distributed.
+- **Frequency**: Logistic regression is more commonly than decision trees.
+- **Y variable**: Decision trees can handle regression and classification problems; logistic regression is only really used for classification problems.
+</details>

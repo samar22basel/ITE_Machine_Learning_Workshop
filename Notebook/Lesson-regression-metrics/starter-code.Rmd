@@ -325,7 +325,7 @@ To get predictions from our model, all we have to do is run `.predict(X_to_predi
 # get predictions from our X data
 predictions = lr.predict(X)
 
-y[:5], predictions[:5]
+y[:10], predictions[:10]
 ```
 
 ---
@@ -356,7 +356,8 @@ Its value is dependent on the number of data points! So we cannot use it to reli
 
 ```{python}
 # Calculate SSE by hand
-
+sse = ((y - predictions)**2).sum()
+sse
 ```
 
 ## Mean Squared Error (MSE)
@@ -380,12 +381,13 @@ Cons:
 
 ```{python}
 # MSE by hand
+((y - predictions)**2).sum() / len(y)
 
 ```
 
 ```{python}
 # MSE using sklearn
-
+metrics.mean_squared_error(y,predictions)
 ```
 
 ## Root Mean Squared Error (RMSE)
@@ -408,6 +410,8 @@ Cons:
 
 ```{python}
 # RMSE
+
+np.sqrt(metrics.mean_squared_error(y, predictions))
 ```
 
 ## Mean Absolute Error (MAE)
@@ -433,6 +437,7 @@ Cons:
 
 ```{python}
 # Via sklearn.metrics
+metrics.mean_absolute_error(y, predictions)
 ```
 
 ## Coefficient of Determination, $R^2$
@@ -464,30 +469,30 @@ Cons:
 
 ```{python}
 # Null prediction
-
+null_prediction = y.mean()
 ```
 
 ```{python}
 # Null residuals
-
+null_residuals = y - null_prediction
 ```
 
 ```{python}
 # Null sum of squares
-
+null_ss = (null_residuals ** 2).sum()
 ```
 
 ```{python}
 # R2 by hand
-
+1 - sse/null_ss
 ```
 
 ```{python}
 # R2 from sklearn
-
+metrics.r2_score(y,predictions)
 ```
 
 ```{python}
 # R2 from model
-
+lr.score(X,y)
 ```
